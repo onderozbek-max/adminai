@@ -393,8 +393,9 @@ Rules for honesty:
 - Show "Need 20+ launched surveys" instead of correlations below that threshold.
 - The app **proposes** weight or rule changes. A guidelines admin approves them,
   which creates a new rubric version.
-- Score is normalized over **active** rubric criteria; inactive ones (for example 10.4
-  until the Q4 rewards launch) switch on without re-weighting (`docs/rubric/decisions.md`).
+- Active rubric criteria always sum to exactly 100. Inactive ones (for example 10.4
+  until the Q4 rewards launch) are worth 0 and switch on with a pre-agreed rebalance
+  (`docs/rubric/decisions.md`, D-8 and D-9).
 - A member satisfaction rating can't be added inside RedJade (D-5). A one-tap rating
   in the MMC app after a completed activity would be the cleanest ground truth; that's
   an MMC roadmap candidate, outside SurveyCoach.
@@ -446,6 +447,8 @@ The researcher always sees something useful. Deterministic findings never wait o
 
 - **Unit (pytest):** every deterministic check, scoring, timing model, diffing,
   fingerprinting, snapshot normalization. Fixture-driven.
+- **Rubric validation:** loading the rubric fails unless active criteria sum to exactly
+  100, every dimension total matches its criteria, and IDs are unique.
 - **Judge:** schema validation, retry path, caching, injection resistance (survey text
   that contains instructions must not change behavior), all against `FakeProvider`.
 - **Reader:** `CrawlReader` against saved RedJade HTML served locally. One opt-in live smoke test.

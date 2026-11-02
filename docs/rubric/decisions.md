@@ -6,6 +6,43 @@ an old one.
 
 ---
 
+## 2026-11-02: Weighted sum to exactly 100 (Onder Ozbek)
+
+**Supersedes** the "scoring over active criteria" normalization below. Onder's call:
+the score must be a plain sum that adds up to 100, not a formula.
+
+### D-8: The six freed points go to the most critical criteria (+1 each)
+
+Inactive 10.2 (1), 10.4 (3), and 10.5 (2) are now worth 0. Their 6 points went to the
+criteria with the most leverage on the goal: members enjoy the survey, trust MMC,
+and come back.
+
+| Criterion | Was | Now | Why it earned the extra point |
+|---|---|---|---|
+| 1.3 Co-creator framing | 3 | 4 | MMC's known value-prop gap: members don't yet believe "Sam's Club hears me, products improve". This intro line is the first place we make that case. |
+| 8.3 Insider moment | 3 | 4 | Access ranks second in MMC's value hierarchy, and IHUTs complete about 15x more often than surveys. Getting something new is what makes members show up. |
+| 6.1 Fits on one screen | 2 | 3 | Surveys are phone-only. Scrolling to find the answers is the friction members feel on every single screen. |
+| 7.2 Phone-friendly image shape | 2 | 3 | Onder's most common real-world defect: wide images that look awkward on phones. |
+| 10.1 Genuine thank-you | 3 | 4 | With reward confirmation and "what happens next" impossible in RedJade today, the thank-you is the main closing lever left. |
+| 10.3 Impact reminder | 2 | 3 | Same reason: the only other way to make the loop visible at the end of a survey today. |
+
+Result: active criteria sum to exactly **100**. Dimension totals: D1 11, D2 13, D3 10,
+D4 9, D5 7, D6 11, D7 13, D8 13, D9 6, D10 7.
+
+### D-9: Pre-agreed rebalance when 10.4 switches on (Q4 2026 rewards launch)
+
+10.4 "What happens next" becomes worth **3**. To stay at 100, three boosts revert,
+chosen because 10.4 itself does the job they were covering for:
+
+- 1.3 Co-creator framing: 4 back to 3
+- 10.1 Genuine thank-you: 4 back to 3
+- 10.3 Impact reminder: 3 back to 2
+
+D10 becomes 3 + 2 + 3 = 8, D1 becomes 10, and the total stays 100. Any future
+activation (10.2, 10.5) needs its own rebalance entry here.
+
+---
+
 ## 2026-11-02: Rubric v2 open questions resolved (Onder Ozbek)
 
 | # | Question | Decision | Effect on the rubric |
@@ -18,7 +55,7 @@ an old one.
 | D-6 | Voice and tone starter (section 4)? | **Confirmed** as the MMC voice for SurveyCoach. | Marked confirmed. |
 | D-7 | RedJade mobile image rendering (width, height cap, dark mode)? | **Agreed:** measure in the crawler spike. | Thresholds in D6 and D7 may be adjusted after the spike, logged here as a new entry. |
 
-### Consequence: scoring over active criteria
+### Consequence: scoring over active criteria (superseded by D-8)
 
 With 10.2, 10.4, and 10.5 inactive, 94 of 100 points are active. Rather than
 re-weighting every dimension now and again in Q4, the score is **normalized over

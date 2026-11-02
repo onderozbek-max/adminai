@@ -40,13 +40,13 @@ open, but it is always shown in the sign-off packet.
 ### Active and inactive criteria
 
 Some criteria depend on capabilities RedJade or MMC don't have yet. They stay in the
-rubric, marked **Inactive**, and switch on when the capability exists. The score is
-normalized over active criteria so thresholds stay meaningful:
-
-`score = round(points earned on active criteria / active points x 100)`
+rubric, marked **Inactive**, and are worth **0 points** until the capability exists.
+**Active criteria always add up to exactly 100.** When an inactive criterion switches
+on, a pre-agreed rebalance keeps the total at 100 (see `decisions.md`, D-8 and D-9).
 
 **Currently inactive:** 10.2, 10.4 (until the Q4 2026 rewards launch), 10.5.
-Active points: **94**. See `decisions.md` (D-3 to D-5).
+Their 6 points went to the six criteria most critical to members coming back,
+marked **+1** below (D-8).
 
 ### Survey types
 
@@ -84,18 +84,18 @@ framing (1.3), and image requirements (7.1). If unclear, use **Non-IHUT Product*
 
 | # | Dimension | Pts |
 |---|---|---|
-| D1 | First impression | 10 |
+| D1 | First impression | 11 |
 | D2 | Respect for members' time | 13 |
 | D3 | Clear questions | 10 |
 | D4 | Fair and complete answers | 9 |
 | D5 | Neutral questions | 7 |
-| D6 | Built for the phone | 10 |
-| D7 | Images that work on a phone | 12 |
-| D8 | Engaging experience | 12 |
+| D6 | Built for the phone | 11 |
+| D7 | Images that work on a phone | 13 |
+| D8 | Engaging experience | 13 |
 | D9 | Community voice and tone | 6 |
-| D10 | Closing the loop | 11 |
+| D10 | Closing the loop | 7 |
 
-### D1. First impression (10)
+### D1. First impression (11)
 
 The title and intro decide whether members start, and how they feel while answering.
 (The intro image is scored under 7.1.)
@@ -104,7 +104,7 @@ The title and intro decide whether members start, and how they feel while answer
 |---|---|---|---|
 | 1.1 | **Inviting, specific title** in sentence case. "Help pick our next coffee pod flavor" beats "Coffee survey Q3". | 2 | [Auto+AI] |
 | 1.2 | **What we're exploring, and why this member was asked** ("Because you tried our new boxer briefs..."). | 3 | [AI] |
-| 1.3 | **Co-creator framing.** Product types: responses shape real Member's Mark products. Services, concept, market research: why their input matters and what it will change. | 3 | [AI] |
+| 1.3 | **+1** **Co-creator framing.** Product types: responses shape real Member's Mark products. Services, concept, market research: why their input matters and what it will change. | 4 | [AI] |
 | 1.4 | **Honest time estimate and the reward** are both stated. | 2 | [Auto] |
 
 ### D2. Respect for members' time (13)
@@ -163,17 +163,17 @@ are scored under 7.5.)
 | 5.3 | **No anchoring.** Don't show a number or benchmark before asking for the member's own estimate. | 1 | [AI] |
 | 5.4 | **Not a wall of agree/disagree.** At most 3 agree/disagree scales in a row. Prefer direct questions ("How soft was it?"). | 1 | [Auto] |
 
-### D6. Built for the phone (10)
+### D6. Built for the phone (11)
 
 | ID | Criterion | Pts | Check |
 |---|---|---|---|
-| 6.1 | **Fits on one screen.** One question per screen. Question text is short (about 25 words or fewer), and the question plus its first answers are visible on an iPhone SE without scrolling. | 2 | [Auto] |
+| 6.1 | **+1** **Fits on one screen.** One question per screen. Question text is short (about 25 words or fewer), and the question plus its first answers are visible on an iPhone SE without scrolling. | 3 | [Auto] |
 | 6.2 | **Short, tappable answer choices.** Each choice fits in 2 lines (about 60 characters). More than 8 choices are grouped, alphabetized, or trimmed. Short lists (7 or fewer) use buttons, not dropdowns. | 2 | [Auto] |
 | 6.3 | **Small grids, short scales.** Grids up to 5 rows and 5 columns, otherwise split into separate questions. Scales of 7 points or fewer. A 0 to 10 scale is avoided or shown vertically. | 2 | [Auto] |
 | 6.4 | **Thumb-friendly.** No drag-and-drop ranking or precision sliders without a tap alternative. No desktop words: "click", "hover", "drag", "on the left / right". Say "tap". | 2 | [Auto] |
 | 6.5 | **Stays put and renders cleanly.** No links that leave the survey and lose progress. No truncated text, missing content, or broken embeds. Nothing relies on color alone. | 2 | [Auto] |
 
-### D7. Images that work on a phone (12)
+### D7. Images that work on a phone (13)
 
 Every MMC survey is seen on a phone, so images are judged at phone size, not on a
 researcher's monitor. SurveyCoach pins each image finding on the phone preview and
@@ -182,13 +182,13 @@ offers a **suggested crop** where shape is the problem.
 | ID | Criterion | Pts | Check |
 |---|---|---|---|
 | 7.1 | **The right image is there.** Product surveys show the specific product (correct flavor, size, variant) on the intro. Services, concept, and market research use an on-topic visual, with no penalty if the topic genuinely doesn't need one. No generic branding, stock-photo filler, placeholders, or watermarks. | 2 | [Auto+AI] |
-| 7.2 | **Phone-friendly shape.** Ideal: square to portrait 4:5 (width divided by height between 0.8 and 1.0). Mild landscape up to 4:3 or taller than 4:5 = 1 point. Wider than 4:3 (for example 16:9) = 0, because at phone width the product shrinks to a strip and looks awkward. Scored on the worst image. | 2 | [Auto] |
+| 7.2 | **+1** **Phone-friendly shape.** Square to portrait 4:5 (width divided by height between 0.8 and 1.0) = 3. Mild landscape up to 4:3, or taller than 4:5 = 1. Wider than 4:3 (for example 16:9) = 0, because at phone width the product shrinks to a strip and looks awkward. Scored on the worst image. | 3 | [Auto] |
 | 7.3 | **Sharp and high resolution.** Full-width images are at least 750 px wide (phones have high-density screens). No visible blur, pixelation, heavy compression, or upscaling. Never stretched or squashed. | 2 | [Auto+AI] |
 | 7.4 | **The product is the hero.** The subject fills most of the frame and is cropped tightly with nothing cut off. Clean, uncluttered background, good lighting, true-to-life color (members judge food and fabric by how they look). | 2 | [AI] |
 | 7.5 | **Fair image choices.** When members compare images (concepts, packaging, flavors), every option shares the same size, shape, background, lighting, scale, and level of polish, and no option has branding cues the others lack. Each has a short label. At most 6 options, laid out 2 per row. Unequal images bias the result: the prettiest photo wins, not the best product. | 2 | [Auto+AI] |
 | 7.6 | **Readable, light, and accessible.** No text baked into images (put it in the question), or if unavoidable it's readable at phone width. Each image under about 500 KB and the whole survey under about 5 MB, since members are often on cellular. Helpful alt text. Transparent images stay visible on dark backgrounds. Any video is 30 seconds or shorter, captioned, and doesn't autoplay with sound. | 2 | [Auto+AI] |
 
-### D8. Engaging experience (12)
+### D8. Engaging experience (13)
 
 This is the dimension that most directly drives "I'd do another one of these."
 
@@ -196,7 +196,7 @@ This is the dimension that most directly drives "I'd do another one of these."
 |---|---|---|---|
 | 8.1 | **Easy, on-topic opener.** The first question is quick and about the product or topic, not demographics. | 2 | [Auto+AI] |
 | 8.2 | **Format variety that fits the content.** Up to 8 questions: 2+ formats. 9 or more: 3+ formats (2 formats = 1 point). Formats: single choice, multiple choice, rating, open text, image choice, ranking or best/worst, grid, slider. | 2 | [Auto] |
-| 8.3 | **An insider moment.** At least one question lets members react to something new or not yet public: a concept, flavor, package, prototype, or sneak peek. For market research, any genuinely fresh angle counts. | 3 | [AI] |
+| 8.3 | **+1** **An insider moment.** At least one question lets members react to something new or not yet public: a concept, flavor, package, prototype, or sneak peek. For market research, any genuinely fresh angle counts. | 4 | [AI] |
 | 8.4 | **Only relevant questions.** Branching skips questions that don't apply, and earlier answers are referenced where natural ("You said you drink coffee daily..."). | 2 | [AI] |
 | 8.5 | **A good energy curve.** Effortful questions sit in the middle. Demographics and sensitive questions come last and are optional. The survey ends on a light note. | 2 | [AI] |
 | 8.6 | **Room to speak freely.** One optional "Anything else you'd like the product team to know?" | 1 | [Auto] |
@@ -208,17 +208,17 @@ This is the dimension that most directly drives "I'd do another one of these."
 | 9.1 | **Warm and human.** 4 = conversational throughout, sounds like a person. 3 = mostly warm with some formal phrases. 1 = mostly corporate. 0 = clinical. Light humor in the intro is welcome. Emoji: at most one, intro only, never in questions or answer choices. | 4 | [AI] |
 | 9.2 | **Follows the content standards** (section 4). 0 to 1 issues = 2, 2 to 4 issues = 1, 5 or more = 0. | 2 | [Auto+AI] |
 
-### D10. Closing the loop (11)
+### D10. Closing the loop (7)
 
 Members come back when they believe they were heard.
 
 | ID | Criterion | Pts | Check |
 |---|---|---|---|
-| 10.1 | **A genuine thank-you** that names what their feedback will be used for. "Survey complete" doesn't count. | 3 | [AI] |
-| 10.2 | **Inactive (RedJade can't show earned points).** **Reward confirmed** ("You've earned 50 points"). Full points if the platform shows it automatically. | 1 | [Auto] |
-| 10.3 | **Impact reminder.** Their feedback helps shape Member's Mark products. | 2 | [AI] |
-| 10.4 | **Inactive until the Q4 2026 rewards launch.** **What happens next.** When and where members will hear what we learned ("We'll share results in the Community in about 6 weeks"). | 3 | [AI] |
-| 10.5 | **Inactive (RedJade can't add it).** **"How was this survey?"** A one-tap rating (1 to 5) at the end. | 2 | [Auto] |
+| 10.1 | **+1** **A genuine thank-you** that names what their feedback will be used for. "Survey complete" doesn't count. | 4 | [AI] |
+| 10.2 | **Inactive (RedJade can't show earned points).** **Reward confirmed** ("You've earned 50 points"). | 0 | [Auto] |
+| 10.3 | **+1** **Impact reminder.** Their feedback helps shape Member's Mark products. | 3 | [AI] |
+| 10.4 | **Inactive until the Q4 2026 rewards launch, then worth 3 (D-9).** **What happens next.** When and where members will hear what we learned ("We'll share results in the Community in about 6 weeks"). | 0 | [AI] |
+| 10.5 | **Inactive (RedJade can't add it).** **"How was this survey?"** A one-tap rating (1 to 5) at the end. | 0 | [Auto] |
 
 ---
 
