@@ -1,61 +1,11 @@
-# SurveyCoach: Reading RedJade Surveys (Reader Design)
+# SurveyCoach: Reading RedJade Surveys (Reader Design v2, Generic Crawler)
 
 - **Date:** 2026-11-02
 - **Parent spec:** `2026-11-02-survey-coach-design.md` (this document replaces its section 8.2)
-- **Status:** Revised after spike R1 (`docs/spikes/r1-redjade-findings.md`). Section 0
-  overrides anything below that conflicts with it.
-
----
-
-## 0. Revision after spike R1: read through RedJade's previewer, never the live link
-
-The spike found that RedJade survey links are **live, anonymous-link surveys** whose
-questions are only delivered after a sign-in that **creates a participant**, with
-progress **saved page by page**. Walking them is never safe. It also found that RedJade
-already has a **previewer** (demo mode, responses not processed, built-in mobile preview)
-that loads the **full questionnaire definition** for a logged-in RedJade user.
-
-**Who reads:** step 2 below originally used each researcher's own login. Onder rejected
-that: managers, designers, and engineers without RedJade accounts must be able to use
-SurveyCoach. Spike R1b (`docs/spikes/r1b-previewer-findings.md`) confirmed the previewer
-path works and saves nothing, and showed that RedJade shares projects individually. The
-**access model is pending a decision**: a SurveyCoach service account, plus either a
-one-time "share with SurveyCoach" step per project or company-wide visibility.
-
-**New primary reader: `PreviewReader`.**
-
-| Step | What happens | Access |
-|---|---|---|
-| 1. Resolve | From the pasted survey link, call `GET /api/v1/surveys/event_meta` for title, project and event IDs, locales, live status, and the full **theme** (fonts, sizes, colors, buttons). | Public, read-only; the same call a member's browser makes when the link opens |
-| 2. Researcher session | SurveyCoach keeps a dedicated local browser profile (`/browser-profile/`, git-ignored). The first time, it opens a visible RedJade window and **the researcher signs in themselves**. SurveyCoach never sees or stores the password. If the session expires, the window reopens. | The researcher's own RedJade login |
-| 3. Structure | In that session, load the questionnaire definition the way the previewer does. Extractor 1 (definition data) becomes the **primary and complete** source: every page and branch, logic, randomization settings, media. | Same session |
-| 4. Appearance | Open RedJade's previewer for the questionnaire at phone size and capture every page into a capture bundle (section 3). Demo mode saves nothing. | Same session |
-
-**What stays from the original design:** capture bundles and element tagging (for
-appearance), the generic and AI vision extractors (as a safety net for anything the
-definition doesn't explain), the replica with fidelity check, and the coverage report.
-
-**What changes:**
-
-- The navigator (section 4) runs only **inside the previewer** to reach pages for
-  capture. No backtracking past screen-outs is needed, because the definition already
-  contains every branch and screen-out.
-- Randomization comes from the definition's settings, not from comparing sessions.
-- Languages come from `event_meta.locales`.
-- The public-link crawl is **removed**. Live anonymous links are never signed into.
-
-**Later (hosting):** the official RedJade API replaces steps 2 and 3 with service
-credentials. Appearance then comes from the previewer under a service account, or from
-the theme tokens.
-
-**Gaps introduced by this revision:**
-
-| # | Gap | Resolution |
-|---|---|---|
-| G-15 | A researcher without access to the RedJade project can't read it. | Clear message: "Your RedJade account can't open this project. Ask the project owner to share it." |
-| G-16 | The browser profile holds a RedJade session, which is sensitive. | Local only, git-ignored, never uploaded. Settings has **Sign out of RedJade**, which deletes the profile. |
-| G-17 | Per-user browser sessions don't carry over to a hosted SurveyCoach. | Hosting waits for the RedJade API or a service account (ties to main spec O-1). |
-| G-18 | Exact previewer URL, questionnaire JSON shape, and login method are still unknown. | One observed session with a RedJade login (spike R1b, section 12). |
+- **Evidence:** `docs/spikes/r1-redjade-findings.md`, `docs/spikes/r1b-previewer-findings.md`
+- **Decision (Onder, 2026-11-02):** read surveys with a **generic crawler on the public
+  survey link**. No RedJade accounts, no project sharing, no admin roles. The live-data
+  impact is accepted and contained (section 10). The previewer approach is rejected (section 14).
 
 ---
 
@@ -63,413 +13,366 @@ the theme tokens.
 
 | # | Requirement |
 |---|---|
-| RQ-1 | Read **every question type**, including ones we haven't anticipated: single and multiple choice, open text, numeric, dropdowns, grids and matrices, sliders, rankings, best/worst rounds, image choices, nested sub-questions (Q1.1, Q1.2), questions revealed on the same page, info screens, screen-outs, thank-you pages. Unknown widgets must degrade gracefully, never silently disappear. |
-| RQ-2 | Retrieve **question text, answer options, and images** (original files, plus their rendered size on a phone). |
-| RQ-3 | Capture **how each page looks on a phone**, so the mobile viewer is faithful and supports Current / With fixes, device sizes, and Large text. |
-| RQ-4 | **Never pollute research data**: no fake responses counted in results or quotas (section 9). |
-| RQ-5 | Survive RedJade's page markup changing, without code changes where possible. |
-| RQ-6 | Switch to the RedJade API later by replacing one part, not the whole reader. |
-| RQ-7 | Be **re-runnable**: improving the extraction must not require visiting RedJade again. |
-| RQ-8 | Be honest about **coverage**: what was read, how confidently, and what wasn't reached. |
+| RQ-1 | Work from the **public survey link alone**, for anyone, with no RedJade account. |
+| RQ-2 | **Progress through every page generically**: press a button; pick an option and continue; pick in every row of a matrix; pick several options; type a required text or number; slide, rate, rank, or any other interaction a question needs. New question types are added without touching the crawler core. |
+| RQ-3 | Recognize **nested structure**: several questionnaires in one survey (intro, per sample), repeated loops (same questions per sample), matrix rows and sub-questions (Q1.1, Q1.2), questions revealed on the same page. |
+| RQ-4 | **Crawl images** of every kind (`<img>`, responsive sources, CSS backgrounds, SVG, video posters) with original files and rendered size, for evaluation. |
+| RQ-5 | Capture **how each page looks on a phone** for the mobile viewer. |
+| RQ-6 | **Contain the live-data impact**: one tagged participant per read, never a completed response (section 10). |
+| RQ-7 | Be **re-runnable**: improving extraction never requires crawling again. |
+| RQ-8 | Be honest about **coverage**: what was read, how confidently, what wasn't reached. |
 
-## 2. The core idea: capture once, interpret many times
+## 2. Architecture
 
-Reading is split into two independent stages:
-
-1. **Capture.** A headless phone browser walks the survey and saves everything about each
-   page into a **capture bundle** on disk: screenshots, the rendered page markup, the
-   accessibility tree, element positions, images, and network traffic. It makes no
-   decisions about what a "question" is.
-2. **Interpret.** Pure functions turn a capture bundle into three outputs:
-   - **Structure:** the `SurveySnapshot` (screens, questions, options, media) for the checks.
-   - **Appearance:** a **replica** of each page for the mobile viewer.
-   - **Coverage:** an honest report of what was read and how.
-
-Why this split:
-
-- Extraction bugs are fixed by re-interpreting saved bundles, with no new RedJade
-  sessions (RQ-7, and fewer chances to pollute data).
-- Every real capture becomes a regression test fixture.
-- When the API arrives, it replaces the *structure* source. Appearance still comes from
-  a capture, because an API returns data, not how the page looks on a phone (RQ-6).
+Two stages: **crawl and capture** (touches RedJade once per read), then **interpret**
+(pure functions over saved files, re-runnable at will).
 
 ```
-RedJade URL
-  -> CaptureSession (Playwright, phone emulation)
-       Navigator  <->  PageCapturer
-       -> CaptureBundle (disk)
-            -> Extractor chain  -> SurveySnapshot (+ confidence per question)
-            -> ReplicaBuilder   -> sanitized per-screen HTML + assets
-            -> CoverageReport
-                 -> review pipeline, phone viewer, reading moment
-
-Later:  RedJade API (StructureSource) --merge by question ID--> SurveySnapshot
-        CaptureSession (AppearanceSource) -----------------------> replica + screenshots
+Survey link
+  -> Resolve: GET event_meta (public, read-only): title, project, event, locales, theme, live status
+  -> CrawlSession (Playwright Chromium, phone emulation, fresh context)
+       per page:  OBSERVE -> PLAN -> ACT -> VERIFY      (section 4)
+                  strategy registry (section 5), vision fallback (5.6)
+       passive recorder: questionnaire JSON if RedJade sends it (3.3)
+  -> CaptureBundle on disk (per page: screenshots, tagged DOM, a11y tree, geometry, images)
+  -> Interpret (pure):
+       extractor chain  -> SurveySnapshot (structure, nesting, confidence)   (section 8)
+       ReplicaBuilder   -> sanitized per-page HTML for the phone viewer      (section 9)
+       CoverageReport                                                       (section 11)
 ```
 
-## 3. Capture session
+`SurveyReader` remains the seam. `CrawlReader` is v1, `FixtureReader` serves tests and
+samples. When the official RedJade API arrives it becomes the **structure** source
+(merged by question ID); the crawl keeps providing **appearance**.
+
+## 3. Crawl session
 
 ### 3.1 Browser setup
 
-- Playwright Chromium, headless, a **fresh browser context per session** (no cookies,
-  storage, or cache carried between sessions or surveys).
-- **Phone emulation:** iPhone-class viewport (390 x 844 CSS px, device scale factor 3,
-  touch, mobile user agent). The exact user agent mirrors how the MMC app opens RedJade
-  (in-app web view or browser), confirmed in the spike.
-- Locale `en-US`, timezone `America/Chicago`, reduced motion on (stable screenshots).
-- Network recording on (HAR). Third-party analytics and trackers are blocked, so pages
-  load faster and nothing is reported to analytics.
-- Hard limits: 150 screens per session, 30 s per page load, 10 minutes per session,
-  200 MB per bundle, 15 MB per asset.
+- Playwright Chromium, headless, **fresh context per read**. Proxy from the system PAC
+  file (`proxy-intlho.wal-mart.com:8080` on the Walmart network).
+- Phone emulation: iPhone 16 (393 x 852 CSS px, DPR 3, touch, iOS Safari user agent).
+- Locale `en-US`, reduced motion, analytics and tracker requests blocked.
+- Limits: 200 pages, 30 s per page, 15 minutes per read, 300 MB per bundle, 15 MB per image.
 
-### 3.2 What is captured for every screen
+### 3.2 Per-page capture (OBSERVE)
 
-| Artifact | How | Used for |
-|---|---|---|
-| Viewport screenshot (what's visible without scrolling) | `page.screenshot()` | "Fits on one screen" (6.1), pins, packet thumbnails |
-| Full-page screenshot | `page.screenshot(full_page=True)` | Ground truth for the viewer, replica fidelity check |
-| Rendered markup with element tags | `page.content()` after tagging (3.3) | Replica, generic extractor |
-| Accessibility tree | `page.locator("body").aria_snapshot()` | Generic extractor: roles and names of every control |
-| Element geometry | One `page.evaluate` pass: bounding boxes, rendered vs. natural image size, text overflow (`scrollWidth > clientWidth`), computed font size, CSS background images | Phone checks (D6, D7), pins, stretched-image check |
-| Assets | Images, fonts, and stylesheets from network responses, stored once by content hash | Image checks, replica |
-| Console errors and failed requests | Playwright events | Broken images (B7), rendering issues (6.5) |
-| Navigation log | What the navigator did (answers chosen, retries, timings) | Coverage, debugging, determinism |
-
-### 3.3 Element tagging
-
-Before saving the markup, the capturer stamps every meaningful element with a stable
-`data-sc-id` (question container, question text, option, input, image, button). The same
-ID is used in the snapshot, in findings, in phone pins, and in "With fixes" patches.
-One ID scheme ties reading, checking, and previewing together.
-
-### 3.4 Progressive streaming
-
-Each captured screen is emitted immediately (`screen_captured` event with its viewport
-screenshot), so the reading moment shows the **real pages** arriving on the phone
-while the walk continues.
-
-## 4. Navigator: getting from page to page
-
-To see page 2, page 1 must be answered. The navigator answers like a careful tester.
-
-### 4.1 Answer policy (deterministic)
-
-| Control | Answer |
+| Artifact | Notes |
 |---|---|
-| Radio group / single choice | First option that isn't an exclusive "none" or "prefer not to say" (screeners: see 4.3) |
-| Checkboxes / multiple choice | One option, same rule |
-| Dropdown | First real option (skip placeholders like "Select...") |
-| Short or long text | `SurveyCoach test` (an obvious test marker) |
-| Numeric | Midpoint of min/max attributes, else 1; retry with validation hints |
-| Date | Today, or the midpoint of the allowed range |
-| Slider | Midpoint |
-| Grid / matrix | Middle column in every row |
-| Ranking (drag or select) | Leave default order; if required, tap items in order |
-| Best/worst rounds | First item best, last item worst |
-| Constant sum | Split evenly, remainder to the first item |
-| Unknown widget | Click the first focusable control inside it, then try Next |
+| Viewport screenshot | What a member sees without scrolling. |
+| Full-content screenshot | RedJade scrolls **inside an inner container** (spike R1b), so the capturer finds the scrolling element, scrolls it in steps, and stitches. `full_page` alone is wrong. |
+| Tagged DOM | Every question container, prompt, option, input, image, and button gets a stable `data-sc-id` before saving. Findings, pins, and "With fixes" patches use the same IDs. |
+| Accessibility tree | `aria_snapshot()`: roles and names of every control. |
+| Geometry | Bounding boxes, inner-scroller height vs. viewport (true "fits on one screen"), text overflow, computed fonts, image natural vs. rendered size. |
+| Images | Section 7. |
+| Console errors, failed requests | Broken images (B7), rendering issues (6.5). |
+| Action log | What was observed, planned, done, and verified (section 4), with timings. |
 
-A fixed seed keeps choices **identical across re-checks**, so the same path is walked
-each time and version diffs compare like with like.
+Each page is streamed to the UI as soon as it's captured (`page_captured` event), so the
+reading moment shows real pages arriving on the phone.
 
-### 4.2 Page loop
+### 3.3 Passive definition recording
 
-1. Wait for the page to settle (network idle plus no layout change for 500 ms).
-2. Capture (section 3.2).
-3. Answer controls in visual order. **After each answer, re-scan the page**: newly
-   revealed questions (show-if logic on the same page) are captured as conditional
-   questions with their trigger recorded.
-4. Find the advance control (button whose accessible name matches Next, Continue,
-   Submit, an arrow, or the RedJade-specific selector from the adapter).
-5. Click and wait. If the page didn't change and error text appeared, read the error,
-   adjust the answer (for example, a different number or more selections), and retry
-   up to 3 times. Then stop with coverage "blocked at screen N".
-6. Detect the page type of the result: **question**, **screen-out** (termination text,
-   no inputs, no Next), **end / thank-you**, **loop** (same content hash 3 times, stop).
+RedJade's participant app must download the questionnaire to draw it. The recorder keeps
+every JSON response from `/api/v1/` (secrets redacted). If it contains the questionnaire
+definition (the previewer used `questionnaires/<id>` with `page_groups -> pages ->
+questions`, `answers`, `triggers`), the extractor chain uses it as the **highest-confidence
+source, including branches the walk never visited**. If RedJade doesn't send it, nothing
+breaks: the page-based extractors carry the read. First real crawl confirms which.
 
-### 4.3 Screeners and screen-outs
+## 4. The page loop: OBSERVE, PLAN, ACT, VERIFY
 
-- A screen-out page is captured (it's checked for B3 and the warm thank-you) along
-  with the elapsed estimated time at which it occurred.
-- Then the navigator **backtracks**: a new session replays the same path and picks a
-  different option on the most recent screener question, until it qualifies or the budget
-  (5 sessions per survey) runs out.
-- The qualifying path is the **primary path** that all checks and the viewer use.
-  Screen-out pages found along the way are attached to the screens that triggered them.
+```
+for each page (until end, stop rule, or budget):
+    observe  -> PageObservation (DOM, a11y, screenshot, geometry, page kind)
+    classify -> intro | question | sample_code | info | screen_out | end | error
+    plan     -> for each ResponseGroup: pick the best Strategy, produce Actions
+    act      -> run Actions; after each one re-observe for revealed questions (4.3)
+    advance  -> press the advance control (4.4), unless the stop rule says no (10)
+    verify   -> new page? done. Same page + validation error? repair (4.5). Stuck? vision (5.6)
+```
 
-### 4.4 Never-submit rule
+### 4.1 Response groups (generic detection)
 
-The navigator never clicks the advance control on the **last question page** (the
-page whose next result would be the end page), unless the session is in confirmed
-test mode (section 9). The thank-you page is then not captured in live mode; the
-coverage report says so, and checks D10 run only in test mode.
+A **response group** is one thing a member must answer. Detection is platform-neutral,
+in this order, each signal adding confidence:
 
-## 5. Extractor chain: turning pages into questions
+1. ARIA: `radiogroup`, `group`, `listbox`, `slider`, `spinbutton`, `grid`, `table` with inputs.
+2. Native forms: inputs sharing a `name`, `fieldset`/`legend`, `select`, `textarea`, `input[type=*]`.
+3. **Button-style options** (RedJade renders answers as buttons, spike R1b): sibling
+   clickable elements with similar size and style under one prompt, toggled by
+   `aria-pressed`, `aria-checked`, or a class change on click.
+4. Layout: a repeated row structure under a header row = matrix; each row is a child group.
+5. RedJade rules file (`readers/redjade_rules.yaml`): selectors learned from captures,
+   kept as data so markup changes mean editing YAML, not code.
 
-Extractors run in priority order. Each returns questions with a **confidence** (0 to 1)
-and a **source**. For every element ID, the highest-confidence result wins.
+### 4.2 Plan
 
-| Order | Extractor | How it works | Strength |
-|---|---|---|---|
-| 1 | **Network definition** | If RedJade's page loads the survey definition as JSON, parse it directly. | Exact text, IDs, types, maybe even branching. Confirmed or ruled out by the spike. |
-| 2 | **RedJade adapter** | Selector rules for RedJade's markup (question container, numbering, option list, Next button), stored as **data** in `readers/redjade_rules.yaml`. | Precise. Markup changes mean editing a YAML file, not code (RQ-5). |
-| 3 | **Generic accessible-form extractor** | Uses the accessibility tree and form semantics that any survey platform must expose: radio groups, checkboxes, text boxes, tables of radios, sliders, labels, fieldsets, headings. Platform-independent. | Works on any reasonable survey page, including widgets the adapter doesn't know. |
-| 4 | **Vision fallback** | For anything still unknown or low confidence: the AI judge receives the screenshot crop plus simplified markup and returns structured questions (validated JSON). | Handles custom widgets (card sorts, heat maps). Marked "read by AI". |
+Each group goes to the strategy registry (section 5); the highest-confidence strategy
+produces a list of typed **Actions**: `click(id)`, `select(id, value)`, `type(id, text)`,
+`set_range(id, value)`, `drag(id, to_id)`, `scroll(id)`, `press(key)`. Actions only target
+tagged elements on the current page. Nothing else is allowed.
 
-### 5.1 Question kinds
+### 4.3 Same-page reveals
 
-`intro`, `info`, `single_choice`, `multi_choice`, `dropdown`, `open_text_short`,
-`open_text_long`, `numeric`, `date`, `rating` (stars, numbered scale), `slider`,
-`grid_single`, `grid_multi`, `grid_text`, `ranking`, `best_worst`, `image_choice`,
-`constant_sum`, `card_sort`, `click_map`, `file_upload`, `video`, `screen_out`,
-`thank_you`, `unknown`.
+After every action the page is re-observed. New groups that appear (follow-up questions,
+"Other, please specify" boxes) are captured as **conditional**, linked to the option that
+revealed them, and planned in turn.
 
-`unknown` questions keep their text, screenshot, and geometry. Text-only checks
-(clarity, tone, bias, grammar) still run on them; type-specific checks skip them, and
-coverage lists them so the researcher can glance at them.
+### 4.4 Advance control
 
-### 5.2 Nested and grouped questions
+Found by role and accessible name (`Next`, `Continue`, `Begin`, `Start`, `Submit`,
+`Finish`, `Done`, arrow icons with an aria-label), position (bottom, sticky footer), and
+the rules file. Its label also feeds the stop rule (`Submit`, `Finish`, `Done` on a
+non-intro page = likely final submission; section 10).
 
-- A question may have **children** (Q1 with Q1.1, Q1.2, Q1.3). Nesting comes from, in
-  order: the network definition, RedJade numbering patterns in the adapter, then
-  fieldset and heading hierarchy in the generic extractor.
-- Grids are one question with rows (each row a child question sharing the column scale),
-  so both views work: "a grid with 6 rows" (6.3) and per-row text checks (3.1).
-- A screen can hold several questions. Checks know both the screen and the question.
+### 4.5 Verify and repair
 
-### 5.3 Piping and randomization
+- **Page fingerprint** = hash of visible prompt text, option labels, and URL. Changed = advanced.
+- Unchanged plus visible error text: parse it with repair rules, re-plan, retry up to 3 times.
 
-- **Piping:** text containing values the navigator entered (for example, "You said
-  SurveyCoach test...") or an option it chose is marked as **piped** so checks don't
-  flag our own test answers as typos.
-- **Randomization:** when backtracking produces a second session, option and question
-  order are compared. Differences mark the question as **randomized**. Content hashes
-  and version diffs use a canonical order (sorted), while checks use the displayed
-  order. Without a second session, randomization is unknown, and the snapshot says so.
+| Error pattern (examples) | Repair |
+|---|---|
+| "required", "please answer", "select an answer" | Fill groups that were skipped or misdetected |
+| "select at least N" / "at most N" / "exactly N" | Adjust the number of selections |
+| "between X and Y", "must be a number" | Re-enter a number within range |
+| "must total 100" | Rebalance constant-sum inputs |
+| "N characters" | Type a longer or shorter text |
+| "rank all items" | Complete the ranking |
 
-## 6. SurveySnapshot (reader output)
+- Still stuck: vision fallback (5.6). Still stuck: stop with coverage "blocked at page N",
+  keep everything captured so far.
 
-Replaces the snapshot outline in the parent spec, section 8.2.
+## 5. Strategy registry (how any question type gets answered)
+
+### 5.1 Contract
+
+```python
+class InteractionStrategy(Protocol):
+    kind: str                                           # e.g. "single_choice"
+    def detect(self, group: ResponseGroup) -> float: ...   # confidence 0..1
+    def plan(self, group: ResponseGroup, policy: AnswerPolicy) -> list[Action]: ...
+```
+
+Strategies are registered in a list; the crawler core never knows question types.
+**Adding a type = adding one strategy class plus a Survey Zoo page** (open/closed).
+
+### 5.2 Built-in strategies
+
+| Strategy | Detects | Plans |
+|---|---|---|
+| `AdvanceOnly` | Info, intro, and instruction pages with no groups | Nothing; just advance |
+| `SingleChoice` | Radio groups, button-style options with single selection | Click one option |
+| `MultiChoice` | Checkbox groups, multi-toggle buttons | Click one (or the minimum required) |
+| `Dropdown` | `select`, `listbox`, custom combobox | Open, pick first real option |
+| `ShortText` / `LongText` | `input[type=text]`, `textarea`, contenteditable | Type `SurveyCoach test` (padded if a minimum length applies) |
+| `Numeric` | `input[type=number]`, `spinbutton`, numeric patterns | Midpoint of min/max, else 1 |
+| `Date` | `input[type=date]`, date pickers | Today or midpoint of the allowed range |
+| `Rating` | Star rows, numbered scales, NPS 0 to 10 | Middle value |
+| `Slider` | `input[type=range]`, `role=slider`, line scales | Keyboard arrows to the midpoint; drag as fallback |
+| `MatrixSingle` / `MatrixMulti` | Rows of radios or checkboxes under a column header | Middle column in **every row** |
+| `MatrixText` | Rows of text or number inputs | Fill every cell |
+| `Ranking` | Draggable lists, rank-by-click, rank dropdowns | Keep the shown order: click in order or assign 1..N |
+| `BestWorst` | Paired best/worst columns per item set | First item best, last item worst |
+| `ConstantSum` | Numeric inputs with a total | Split evenly, remainder to the first |
+| `ImageChoice` | Options that are images (or image plus label) | Treated as single or multi choice |
+| `SampleCode` | Prompts asking for a sample or blinding code | Use a code shown on the page if present; else stop with "needs a sample code" |
+| `Consent` | Single checkbox plus agreement text | Check it |
+| `VisionAssisted` | Anything with confidence below 0.5 | Section 5.6 |
+
+### 5.3 Answer policy
+
+- **Deterministic** (seeded): the same survey gets the same answers on every re-check,
+  so version diffs compare the same path.
+- Avoid exclusive answers ("None of these", "Prefer not to say") unless required.
+- **Screeners:** if the next page is a screen-out, capture it, then (budget permitting)
+  start a fresh session and pick a different option on the last screener question.
+  Budget: 3 sessions per read (each is one tagged participant; section 10).
+
+### 5.4 Answer text is a marker
+
+Every typed text is `SurveyCoach test`, and numbers are plausible but not extreme, so
+stray partial responses are easy to spot.
+
+### 5.5 Page kind classification
+
+`screen_out` (no inputs, no advance, termination wording), `end` (thank-you wording, no
+advance), `error` (RedJade error states seen in its code: `completed_survey`,
+`test_complete`, `no_event_scheduled`, `invalid_code`), `sample_code`, `info`, `question`.
+
+### 5.6 Vision fallback (screenshot to actions)
+
+Used only when deterministic strategies fail or have low confidence. It's the
+"screenshot to image and text" path, made safe:
+
+1. Draw numbered marks on every tagged interactive element (set-of-marks screenshot).
+2. Send the screenshot, the mark list (id, role, name), and the visible error text to the
+   AI judge with a fixed instruction: return JSON `{questions: [...], actions: [...]}`.
+3. Validate with Pydantic: actions must use the allowed action types and existing mark
+   IDs. Anything else is rejected. Survey text is untrusted input.
+4. Execute, verify, and log. At most 2 vision attempts per page.
+5. Questions it reports are recorded with `source: vision` and shown as "read by AI".
+
+## 6. Nested structure, loops, and reveals
+
+| Structure | How it's recognized | How it's recorded |
+|---|---|---|
+| Several questionnaires in one survey (intro plus product sections) | Questionnaire boundary: progress bar resets, header changes (for example "Sample 578"), title change, or definition JSON `questionnaire_id` | `Section` nodes grouping pages |
+| **Loops** (same questions per sample) | Page fingerprints repeat with a different header or sample code | First instance captured fully; later instances recorded as **repeats** (count, sample labels). Counts drive the time estimate and fatigue. |
+| Matrix rows | Row structure under a column header | Parent question with row children sharing the scale |
+| Sub-questions (Q1.1, Q1.2) | Numbering patterns, fieldset nesting, heading hierarchy, definition JSON | Parent with children |
+| Same-page reveals | New groups after an action (4.3) | `conditional_on: {question, option}` |
+| Branches not walked | Definition JSON `triggers` (if captured) | Present in the snapshot as `reached: false`; checked on text, not shown on the phone |
+
+## 7. Images
+
+### 7.1 Discovery (per page, after lazy content loads)
+
+- Scroll the **inner scroller** to the bottom in steps so lazy images load.
+- Collect: `<img>` (using `currentSrc`, so the responsive source actually chosen),
+  `<picture>`, CSS `background-image` on any element, inline `<svg>`, `<canvas>` (snapshot),
+  video `poster`, and images inside option buttons (image choice).
+
+### 7.2 Capture
+
+| Field | Source |
+|---|---|
+| Original bytes | Downloaded through the same browser context (same cookies), stored by content hash |
+| Format, file size | Response headers and bytes |
+| Natural size | `naturalWidth/Height` or decoded file |
+| Rendered size and position | Bounding box at the phone viewport |
+| Crop | `object-fit`, `object-position`, background-size; the visible region is computed |
+| Sharpness check | Natural width vs. rendered width x DPR (upscaled = blurry) |
+| Alt text and nearby label | DOM |
+| Rendered crop | Element screenshot exactly as the member sees it |
+| Role | Question illustration, option image, logo or decoration (by position and size) |
+
+### 7.3 Evaluation hand-off
+
+Deterministic checks (D7 rubric): resolution vs. rendered size, upscaling, aspect ratio
+and crop loss, file weight, missing alt text, failed loads (B7). AI checks: relevance to
+the question, clarity, legibility of text inside the image, and whether the product is
+recognizable at phone size.
+
+## 8. Interpretation: extractor chain and SurveySnapshot
+
+### 8.1 Extractor chain
+
+Runs over a saved bundle (no RedJade access). For each element ID, the highest-confidence
+result wins.
+
+| Order | Extractor | Source |
+|---|---|---|
+| 1 | Definition | Questionnaire JSON captured passively (3.3): exact text, IDs, types, answers, values, triggers |
+| 2 | RedJade rules | `readers/redjade_rules.yaml` selectors over the tagged DOM |
+| 3 | Generic | Response groups and strategy kinds from the crawl (4.1, 5.2), accessibility tree, labels |
+| 4 | Vision | Questions reported by the vision fallback (5.6) |
+
+The crawl already knows each group's kind (it had to answer it), so extraction mostly
+**names and links** what the crawl did, rather than guessing from scratch.
+
+### 8.2 SurveySnapshot
 
 ```
 SurveySnapshot
-  survey_title, source_url, captured_at, reader_version, content_hash
-  screens: [Screen]
-  coverage: CoverageReport
+  survey_title, source_url, event_id, project_id, captured_at, reader_version, content_hash
+  theme (from event_meta)    sections: [Section]    coverage: CoverageReport
 
-Screen
-  id, position, kind (question_page | intro | info | screen_out | thank_you)
-  viewport_png, full_png, replica_path, est_scroll_height
-  questions: [Question]
-  screen_out_of: question id that led here (screen-out pages only)
-
-Question
-  id (RedJade ID if known, else stable hash of position and text)
-  label ("Q1.2" if shown), text, help_text, kind, required
-  options: [Option]    rows: [Question]    scale: Scale | None
-  children: [Question] conditional_on: {question_id, option_id} | None
-  validation: {min, max, max_length, min_select, max_select}
-  media: [Media]       element_id (data-sc-id)   bbox
-  flags: piped, randomized
-  source: network | redjade | generic | vision     confidence: 0..1
-
-Option:  id, label, element_id, media, is_other_with_text, is_exclusive
-Scale:   points, low_label, high_label, has_midpoint, direction
-Media:   kind (image | background_image | video | embed), asset_hash, alt,
-         natural_w, natural_h, rendered_w, rendered_h, bytes, element_id
+Section:   id, title, kind (intro | product | screener | other), pages: [Page], repeats: [str]
+Page:      id, position, kind (question | info | intro | sample_code | screen_out | end)
+           viewport_png, full_png, replica_path, scroller_height, viewport_height
+           questions: [Question], reached: bool
+Question:  id (RedJade id if known, else stable hash), label ("Q1.2" if shown), text, help_text
+           kind (strategy kind or "unknown"), required, options: [Option], rows: [Question]
+           children: [Question], scale, validation, conditional_on, media: [Media]
+           element_id, bbox, flags (piped, randomized), source, confidence, reached
+Option:    id, label, value, element_id, media, is_other_with_text, is_exclusive
+Media:     kind, asset_hash, alt, natural_wh, rendered_wh, visible_crop, bytes, format,
+           role, element_id
 ```
 
-## 7. The mobile viewer: replica first, screenshot as truth
+- `content_hash` uses canonical (sorted) option order, so randomized surveys don't create
+  false new versions. Option order is randomized if the definition says so, or if it
+  differs across sessions.
+- Piped text (containing the crawler's own answers, such as `SurveyCoach test`) is
+  flagged so checks don't treat it as a typo.
 
-Three ways to show a page were considered:
+## 9. Mobile viewer
 
-| Option | Faithful | Supports With fixes, devices, Large text | Verdict |
-|---|---|---|---|
-| Screenshots only | Exact | No: a picture can't be edited or reflowed | Ground truth and fallback |
-| Re-draw from the snapshot in our own components | Approximate | Yes | Not faithful enough to trust; also a second renderer to maintain |
-| **Replica: the captured page markup, made safe, shown in a phone frame** | Near exact | **Yes** | **Chosen** |
+- **Current:** a replica of the captured page (scripts removed, assets local, sandboxed
+  iframe, strict CSP), checked against the real screenshot at capture time. Below 98%
+  pixel similarity, that page falls back to the screenshot.
+- **With fixes:** text patches by `data-sc-id`, image swaps for suggested crops, screen
+  reordering. Structural fixes (splitting a grid) are described in the coach, labeled
+  "not previewed".
+- **Devices and Large text:** resize the iframe and scale text; pins follow live element boxes.
+- **Dark mode:** shown only if RedJade's theme supports it (event_meta shows a single
+  light theme so far).
+- **Play as a member:** steps through captured pages with loops expanded by repeat count.
 
-### 7.1 Building the replica
+## 10. Live-data containment (accepted trade-off)
 
-- Start from the tagged markup (3.3). **Remove all scripts**, event handlers, forms'
-  submit targets, iframes to third parties, and external links.
-- Rewrite stylesheets, fonts, and images to locally stored assets. Inline CSS
-  background images as local URLs.
-- Freeze the state the page had at capture (inputs unselected, the way a member first sees it).
-- Serve each replica from a dedicated path inside a **sandboxed iframe with no script
-  permission** and a strict content security policy (no network access outside our
-  asset path). Survey content is untrusted.
+Spike R1 confirmed: pressing Begin **creates a participant**, and progress is **saved per
+page**. A crawler can't avoid that, so it's contained:
 
-### 7.2 Fidelity check
-
-At capture time, the replica is rendered headlessly at the same viewport and compared
-with the real screenshot (pixel difference). Above 98% similarity, the replica is used.
-Below that, the viewer falls back to the **screenshot** for that screen and shows a small
-"Exact snapshot" label; Large text and text-level With fixes previews are then shown
-in the coach panel instead of on the phone.
-
-### 7.3 What each viewer feature does
-
-| Feature | How |
+| Rule | Detail |
 |---|---|
-| Current | Replica (or screenshot fallback) |
-| With fixes, text | Patch text nodes by `data-sc-id` using the picked suggestion |
-| With fixes, images | Swap the image source for the suggested crop |
-| With fixes, screen order (for example, screener moved earlier) | Reorder screens in the rail and Play sequence |
-| With fixes, structural changes (split a grid, add a question) | Not drawn on the phone. The coach shows the suggested structure. Labeled "not previewed". |
-| Devices (iPhone SE, iPhone 16, Android XL) | Resize the iframe; RedJade's responsive CSS reflows. Pins re-position using live element boxes. |
-| Large text | Scale text in the replica (130% and 200%) |
-| Dark mode | Only shown if the spike finds RedJade supports dark mode. If RedJade is always light, the toggle is removed, and transparent-image checks (7.6) still run. |
-| Play as a member | Steps through primary-path screens with the timing model |
-| Pins | Positioned from element geometry, so they stay attached as layouts reflow |
+| One participant per read | Re-checks are new reads. Screener backtracking adds at most 2 more (budget 3). |
+| **Tagged participants** | If RedJade accepts an `external_id` link parameter (its sign-in code sends one), every read uses `external_id=SURVEYCOACH-TEST-<read id>`, so researchers can filter or delete these participants. Verified on the first crawl; if unsupported, the marker text (5.4) is the fallback. |
+| **Never complete a response** | Stop before the final submission: an advance button labeled Submit, Finish, or Done on a non-intro page, a progress bar at 100%, or the last page of the definition JSON. The thank-you page is therefore not captured; coverage says so and D10 checks use the definition text when available. |
+| Never retake | Fresh context per read; no participant reuse. |
+| Visible to researchers | The paste box says: "Reading this survey adds one test participant, tagged SurveyCoach, to RedJade. Exclude it from results." The sign-off packet lists each read's tag. |
+| Prefer pre-launch reads | Guidance: check surveys before the link goes to members. |
+| Rate limits | One read at a time per survey; no read more than once a minute. |
+| No member identifiers | Never add real member IDs or `enc` tokens. |
 
-## 8. Coverage report
+## 11. Coverage report
 
-Shown in the reading moment, the review header, and the packet:
+Shown in the reading moment, review header, and packet: pages captured; questions by kind
+and source (definition, rules, generic, AI) with confidence; sections and loop repeats;
+reveals found; screen-outs found; branches known but not walked; stop reason (end
+reached, final-submit stop, blocked at page N, budget, error); participants created with
+their tags; replica fallbacks.
 
-- Screens captured, and whether the end page was reached.
-- Questions by kind, and how they were read (adapter, generic, or AI) with confidence.
-- Unknown widgets and low-confidence questions ("Please glance at Q7, read by AI").
-- Screen-outs found and when; sessions used for backtracking.
-- Randomization detected or unknown; piped text detected.
-- Fidelity fallbacks ("2 screens shown as exact snapshots").
-- Blocked or partial reads, with the reason.
-
-A review on partial coverage is still useful, but it's never presented as complete.
-
-## 9. Response safety (no fake data in RedJade)
-
-**Confirmed by spike R1:** RedJade creates a participant at sign-in and saves progress
-page by page, and the example surveys are live anonymous links. Rules:
-
-1. **Never sign into a survey link.** SurveyCoach only calls the public, read-only
-   `event_meta` endpoint on survey links.
-2. Questions and appearance come only from RedJade's **previewer** in the researcher's
-   own session, where responses aren't processed (section 0).
-3. Any text typed in the previewer is `SurveyCoach test`, as a belt-and-braces marker.
-4. No member identifiers (`external_id`, `enc`) are ever added to any URL.
-
-The original rules below are kept for history, but they are superseded:
-
-Each crawl is a survey session. Many platforms **save answers page by page**, so even an
-unfinished walk can create a partial response, use up a quota spot, or **use up a
-single-use link**. Rules:
-
-1. **Test mode (required default):** SurveyCoach reads RedJade **test or preview links**.
-   If RedJade has a test-response flag or a link parameter that excludes responses
-   from data and quotas, the reader always sets it.
-2. **Live links are refused by default.** If a researcher pastes a link that the spike
-   shows to be live, SurveyCoach explains why and asks for the test link. An admin
-   setting can allow live links only after RedJade's owner confirms partial responses
-   are excluded.
-3. Every text answer is `SurveyCoach test`, so any stray response is easy to find and
-   delete.
-4. Session budget per review is capped (5), and re-checks reuse the same deterministic path.
-5. No member identifiers are ever added to the URL.
-
-## 10. Errors
+## 12. Errors
 
 | Situation | Behavior |
 |---|---|
-| Bot challenge or CAPTCHA | Stop. "RedJade asked to verify a human. Try the test link or retry later." |
-| Navigator blocked by validation it can't satisfy | Stop at that screen, review what was read, coverage "blocked at Q9". |
-| Embedded video or third-party content | Captured as a screenshot region; checks note "video not analyzed". |
-| Asset too large or failed to load | Recorded as a finding (6.5, 7.6, or B7). |
-| Session or page timeout | Keep what was read, coverage partial, offer retry. |
-| RedJade markup changed (adapter matches nothing) | Generic extractor and vision fallback take over automatically; coverage shows lower confidence. Adapter rules get updated from the saved bundle. |
+| RedJade error state (`completed_survey`, `no_event_scheduled`, `invalid_code`) | Stop, explain in plain words (for example "This survey is closed") |
+| Bot challenge or CAPTCHA | Stop. Never attempt to bypass. |
+| Sample code required and not shown | Stop at that page: "This survey needs a sample code to continue." |
+| Blocked by validation after repair and vision | Stop at that page, review what was read |
+| Embedded video or third-party content | Captured as an image region; "video not analyzed" |
+| Timeout or budget reached | Keep what was read, coverage partial, offer retry |
+| RedJade markup changes | Generic detection and vision take over; rules YAML updated from saved bundles |
 
-## 11. Testing
+## 13. Testing
 
-- **Survey Zoo:** a local static fixture site that mimics a multi-page survey with every
-  question kind in 5.1, nested questions, same-page reveal logic, validation errors,
-  a screener with a screen-out, piping, randomized options, wide and blurry images,
-  and a thank-you page. All navigator and extractor tests run against it, offline.
-- **Golden captures:** once the spike has a RedJade test link, real capture bundles are
-  saved as fixtures (no member data exists in test sessions). Extractor and replica
-  changes are tested against them without visiting RedJade.
-- **Unit tests:** each extractor on saved bundles; merge rules; piping and randomization
-  detection; replica sanitizer (scripts and external requests removed, injection
-  attempts neutralized); fidelity comparison.
-- **Live smoke test:** opt-in only, test links only.
+- **Survey Zoo** (local fixture site, offline): one page per strategy in 5.2, in both
+  native-input and **button-style** variants; inner scroll container; matrix with 8 rows;
+  same-page reveal; validation errors for each repair rule; screener with screen-out;
+  intro plus two product sections with a per-sample loop; sample-code page; lazy,
+  responsive, background, SVG, and oversized images; a final Submit page (must stop before it).
+- **Strategy unit tests:** detect and plan on saved observations.
+- **Loop tests:** the full crawl of the Zoo produces the expected sections, repeats,
+  reveals, images, and stop reason.
+- **Vision fallback:** FakeProvider returns valid, invalid, and malicious action JSON;
+  only valid actions run.
+- **Golden bundles:** each real RedJade read is saved and replayed through the extractors
+  without network access.
+- **Live crawl:** opt-in only, on a link Onder approves, one tagged participant.
 
-## 12. Spike R1: what it must answer
+## 14. Assumptions and decision history
 
-**R1 (done, read-only):** see `docs/spikes/r1-redjade-findings.md`. Answered: how links
-work, sign-in creates participants, per-page saves, public metadata and theme, the
-previous network-definition question (definition only after sign-in or in the previewer),
-languages, and the proxy setup.
+**Assumptions the crawler depends on** (deliberately few):
 
-**R1b (next, needs a RedJade login for one session):** with Onder or a researcher signed in
-to RedJade in a SurveyCoach-controlled browser window, open the previewer for
-`CakeballsDeepDive` and record (redacting auth headers and cookies):
+1. The public link opens without login (confirmed for the three examples).
+2. No bot challenge (none seen in RedJade's code path).
 
-1. The previewer URL, and how `project_id` / `event_id` map to a `questionnaire_id`.
-2. The questionnaire JSON shape: element types, nesting, logic, randomization, media URLs.
-3. Login method and session lifetime.
-4. Previewer navigation: jump to a page? Required-answer validation in demo mode?
-5. The previewer's mobile rendering vs. a real phone (image widths, height caps, dark mode).
+**Nice to have, verified on the first crawl, not required:** questionnaire JSON visible
+in network traffic (3.3); `external_id` tagging (10).
 
-The original R1 checklist below is kept for history.
-
-Run against a RedJade **test or preview link** first.
-
-1. Does a test or preview link exist? Are test responses excluded from data and quotas?
-   Are answers saved per page? Are links single-use?
-2. Does the page load the survey definition as JSON (extractor 1)?
-3. Are controls native, labeled form elements (generic extractor quality)?
-4. Navigation: Next button naming, validation behavior, URL per page or one-page app,
-   back button, progress bar.
-5. Mobile rendering: image width and height caps, viewport settings, fonts, and
-   whether dark mode is supported.
-6. Bot protection or rate limits.
-7. How the MMC app opens RedJade (in-app web view or browser, user agent, URL
-   parameters it adds).
-
-The spike's findings update section 3.1 (user agent), section 5 (adapter rules, network
-extractor), section 7.3 (dark mode), section 9 (test mode mechanics), and the rubric's
-D6 and D7 thresholds (decision D-7).
-
-## 13. Gap review
-
-A review of this design against the parent spec, the rubric, and how survey platforms
-behave in practice found these gaps. Each is resolved above or listed as an open question.
-
-| # | Gap | Resolution |
-|---|---|---|
-| G-1 | Parent spec said the API reader would *replace* the crawler, but an API returns data, not appearance. The phone viewer would have gone blank. | Split into structure and appearance sources (section 2). |
-| G-2 | Never clicking the final submit doesn't prevent pollution if answers save per page, use up quotas, or burn single-use links. | Test links required by default, live links refused (section 9). |
-| G-3 | Randomized option order would make content hashes and version diffs unstable. | Canonical order for hashing and diffing (5.3). |
-| G-4 | Piped text would contain our test answers and trigger false typo findings. | Piping detection (5.3). |
-| G-5 | Questions revealed on the same page by an answer would be missed. | Re-scan after every answer (4.2). |
-| G-6 | Screen-outs would end the walk early and hide most of the survey. | Backtracking to a qualifying primary path (4.3). |
-| G-7 | Images set as CSS backgrounds, not `<img>`, would escape image checks. | Geometry pass collects computed background images (3.2). |
-| G-8 | "With fixes" previews need suggestions addressed to specific elements, not prose. | Suggestions carry `element_id` and replacement text (parent spec 8.3 updated). |
-| G-9 | The Dark mode toggle may simulate something members never see. | Shown only if RedJade supports dark mode (7.3). |
-| G-10 | A replica that drifts from reality would mislead researchers. | Automatic fidelity check with screenshot fallback (7.2). |
-| G-11 | Untrusted survey markup inside our app is a security risk. | Scripts stripped, sandboxed iframe, strict CSP (7.1). |
-| G-12 | Re-checks walking different answers would produce noisy diffs. | Deterministic seeded navigator (4.1). |
-| G-13 | Thank-you page (D10 checks) can't be captured without submitting in live mode. | Captured in test mode only; coverage states it otherwise (4.4). |
-| G-14 | The sign-off packet and accessibility: the replica iframe is visual only. | Iframe has a title and is inert; all findings and text are available in the rail and coach for keyboard and screen-reader users. |
-
-### Open questions for Onder (answers needed before or during the spike)
-
-**Updated after spike R1:**
-
-1. **Do you (or a researcher who can help) have a RedJade login with access to these
-   projects?** Needed for spike R1b and for every researcher using SurveyCoach.
-2. **Does automating a researcher's own RedJade session fit our RedJade contract?**
-3. ~~How does the MMC app open surveys?~~ Partly answered: the sign-in accepts
-   `external_id` and `enc`, likely the member ID and a signed token from the MMC app.
-   Still worth confirming with the iOS team, but no longer blocking.
-4. ~~Other languages?~~ Answered by data: `event_meta.locales` (these three: English only).
-
-Original questions, kept for history:
-
-1. **Does RedJade have test or preview links, and are test responses excluded from data
-   and quotas?** This is the gating question for the whole reader.
-2. **Does SurveyCoach's automated access fit our contract with RedJade?** Worth a quick
-   check with whoever owns the vendor relationship.
-3. **How does the MMC app open RedJade surveys** (in-app web view or browser)? An
-   engineer on Manuj's iOS team can answer in a minute.
-4. **Spanish or other language versions:** do MMC surveys have them? If yes, v1 reads
-   the default language and flags that others exist; reading all languages is v2.
+**Rejected: reading through RedJade's previewer** (spike R1b). It worked technically and
+saved nothing, but needed a RedJade account, per-project sharing, and possibly an admin
+role, which ruled out managers, designers, and engineers without RedJade. Kept as an
+option if RedJade ever offers a service account or API.

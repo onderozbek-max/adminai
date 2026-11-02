@@ -249,8 +249,7 @@ read-only in the review workspace.
 
 ### 8.2 Survey readers
 
-Full design: **`2026-11-02-survey-reader-design.md`** (capture bundles, navigator,
-extractor chain, replica viewer, coverage, response safety). Summary:
+Full design: **`2026-11-02-survey-reader-design.md`** (v2, generic crawler). Summary:
 
 ```python
 class SurveyReader(Protocol):
@@ -258,19 +257,19 @@ class SurveyReader(Protocol):
     # ReadResult = SurveySnapshot + replica paths + CoverageReport
 ```
 
-- **Capture once, interpret many times.** A headless phone browser saves a capture
-  bundle per screen (screenshots, tagged markup, accessibility tree, geometry, assets).
-  Pure extractors turn bundles into the `SurveySnapshot`, the replica, and coverage.
-- `CaptureReader` (v1): capture plus the extractor chain (network definition, RedJade
-  adapter rules in YAML, generic accessible-form extractor, AI vision fallback).
-- **Revised after spike R1:** the v1 reader is `PreviewReader`. It resolves the link via
-  public `event_meta`, then reads the full questionnaire and captures pages through
-  RedJade's **previewer** in the researcher's own RedJade session. Live survey links are
-  never signed into (reader design, section 0).
+- **Crawl once, interpret many times.** `CrawlReader` (v1) opens the public survey link in
+  a headless phone browser and walks it with an OBSERVE, PLAN, ACT, VERIFY loop. A
+  strategy registry answers any question type (choice, matrix, text, slider, ranking,
+  and more), with an AI vision fallback for unknown widgets. Each page is saved as a
+  capture bundle (screenshots, tagged markup, accessibility tree, geometry, images).
+- Pure extractors turn bundles into the `SurveySnapshot` (sections, loops, nested
+  questions, images), the replica, and coverage. No RedJade account is needed by anyone.
+- Each read creates **one tagged test participant** in RedJade and never completes a
+  response (reader design, section 10). Onder accepted this trade-off.
 - `FixtureReader`: loads saved snapshots and bundles (sample survey, Survey Zoo, tests).
 - Future: the RedJade API becomes the **structure** source, merged by question ID;
   appearance still comes from a capture.
-- The `SurveySnapshot` model (screens, nested questions, options, scales, media,
+- The `SurveySnapshot` model (sections, pages, nested questions, options, scales, media,
   element IDs, confidence) is defined in the reader design, section 6. Its
   `content_hash` uses canonical option order so randomization doesn't create versions.
 
@@ -451,7 +450,8 @@ The researcher always sees something useful. Deterministic findings never wait o
 
 - Advisory only. The app never blocks or launches anything.
 - Survey definitions only. No member responses or PII are read or stored.
-- **The reader must not pollute RedJade data** (reader design, section 9).
+- **The reader contains its RedJade footprint**: one tagged test participant per read,
+  never a completed response (reader design, section 10).
 - Surveys often show **unreleased products and concepts**. They're treated as
   confidential: stored only locally, sent only to the Walmart-approved LLM path, and
   the sign-off packet is stamped "Confidential, internal use only".
@@ -462,13 +462,13 @@ The researcher always sees something useful. Deterministic findings never wait o
 
 | # | Item | Impact | Proposed resolution |
 |---|---|---|---|
-| R1 | **Walking live RedJade links creates participants and saves progress per page** (confirmed in spike R1). | High | Never sign into survey links; read through RedJade's previewer in the researcher's session (reader design, sections 0 and 9). |
+| R1 | **Each crawl creates a participant and saves partial progress in live data** (confirmed in spike R1). | High | Accepted by Onder. Contained: one tagged participant per read, stop before final submit, visible notice to researchers (reader design, section 10). |
 | R2 | Wibey headless image support for vision checks is unverified. | Medium | Spike first. Fallback: text-only image checks (size, dimensions, alt text) until the gateway is available. |
 | R3 | The navigator walks one qualifying path, so other branches may be unseen. | Medium | Backtracking past screen-outs, honest coverage report. Full branching comes from the future API structure source. |
 | R4 | Rubric thresholds in D6 and D7 may shift after the spike measures RedJade rendering (D-7). | Low | Rubric is data; changes go in the rubric and decision log. |
 | R6 | **Non-technical researchers can't install and run a local Python, Node, and Wibey app.** | High | Open question O-1 (section 16). |
 | R7 | Wibey CLI start-up per call may break the "about a minute" promise. | Medium | Batch AI checks by dimension, run calls in parallel, show deterministic findings first (8.5). Measured in spike R2. |
-| R8 | Automated access to RedJade may need vendor approval. | Medium | Open question in reader design, section 13. |
+| R8 | Automated access to RedJade may need vendor approval. | Medium | Ask the RedJade vendor owner before the first live crawl. |
 | R5 | Researchers may distrust AI findings. | High | Evidence on every finding, consistent results, and a golden-set check (section 14) before rollout. |
 | Q1 | Who owns guidelines edits (admin role)? | Low | v1: anyone can edit, every edit versioned. Revisit when hosted. |
 | Q2 | Sign-off skip policy (for example "90+ and no must-fix skips director review"). | Business | Decision for Onder with Morgan and Sue. Product only enables it. |
@@ -526,4 +526,4 @@ detailed plan per stage), so the order lives in one place.
 |---|---|---|
 | O-1 | **Who runs v1, and where?** Options: (a) a pilot on Onder's machine with researchers alongside, then hosting on AI Launchpad with the WMT LLM gateway for self-serve; (b) host from the start, which moves the gateway provider and sign-in into v1. | Researchers can't install a local developer stack. This decides whether hosting is v1 or v1.1. |
 | O-2 | Can we get 20 to 30 past surveys as RedJade test links or exports, with senior-director grades? | Needed for the pre-rollout golden-set check (section 14). |
-| O-3 | RedJade test links, vendor approval, how the MMC app opens surveys, other languages. | Listed in the reader design, section 13. |
+| O-3 | Vendor approval for automated access; how researchers should exclude SurveyCoach test participants from results. | Needed before live crawls become routine. |
