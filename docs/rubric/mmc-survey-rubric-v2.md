@@ -2,7 +2,8 @@
 
 - **Date:** 2026-11-02 (revised same day: images and phone pass)
 - **Author:** Onder Ozbek (v1 draft), revised by the researcher review committee
-- **Status:** Proposed. Replaces `mmc-survey-rubric-v1-draft.md` once approved.
+- **Status:** Approved 2026-11-02. Replaces `mmc-survey-rubric-v1-draft.md`.
+  Decisions and their reasons: `decisions.md`.
 - **Goal of this rubric:** surveys that Member's Mark Community members enjoy, finish,
   trust, and come back for, while still producing clean data for the business.
 - **Context that shapes everything below:** MMC surveys are taken **only on phones**.
@@ -35,6 +36,17 @@
 
 A blocker the researcher deliberately keeps (with a reason) no longer counts as
 open, but it is always shown in the sign-off packet.
+
+### Active and inactive criteria
+
+Some criteria depend on capabilities RedJade or MMC don't have yet. They stay in the
+rubric, marked **Inactive**, and switch on when the capability exists. The score is
+normalized over active criteria so thresholds stay meaningful:
+
+`score = round(points earned on active criteria / active points x 100)`
+
+**Currently inactive:** 10.2, 10.4 (until the Q4 2026 rewards launch), 10.5.
+Active points: **94**. See `decisions.md` (D-3 to D-5).
 
 ### Survey types
 
@@ -105,7 +117,8 @@ The title and intro decide whether members start, and how they feel while answer
 | 2.4 | **Light typing load.** Typing on a phone is work: at most 2 required open-ended questions, the rest optional. | 2 | [Auto] |
 | 2.5 | **No repeats, smooth flow.** Nothing is asked twice in different words. Related questions are grouped, and transition screens only appear when the topic changes. | 1 | [AI] |
 
-**Length targets (estimated minutes).** Starting points, recalibrated against real
+**Length targets (estimated minutes).** Locked starting targets (decision D-1),
+recalibrated against real
 completion times once performance data comes in.
 
 | Type | Full (5) | Partial (3) | Too long (0) |
@@ -202,10 +215,10 @@ Members come back when they believe they were heard.
 | ID | Criterion | Pts | Check |
 |---|---|---|---|
 | 10.1 | **A genuine thank-you** that names what their feedback will be used for. "Survey complete" doesn't count. | 3 | [AI] |
-| 10.2 | **Reward confirmed** ("You've earned 50 points"). Full points if the platform shows it automatically. | 1 | [Auto] |
+| 10.2 | **Inactive (RedJade can't show earned points).** **Reward confirmed** ("You've earned 50 points"). Full points if the platform shows it automatically. | 1 | [Auto] |
 | 10.3 | **Impact reminder.** Their feedback helps shape Member's Mark products. | 2 | [AI] |
-| 10.4 | **What happens next.** When and where members will hear what we learned ("We'll share results in the Community in about 6 weeks"). | 3 | [AI] |
-| 10.5 | **"How was this survey?"** A one-tap rating (1 to 5) at the end. Also how SurveyCoach learns whether its scores are right. | 2 | [Auto] |
+| 10.4 | **Inactive until the Q4 2026 rewards launch.** **What happens next.** When and where members will hear what we learned ("We'll share results in the Community in about 6 weeks"). | 3 | [AI] |
+| 10.5 | **Inactive (RedJade can't add it).** **"How was this survey?"** A one-tap rating (1 to 5) at the end. | 2 | [Auto] |
 
 ---
 
@@ -247,7 +260,7 @@ violation is flagged with a short rewrite in the MMC voice.
 | Consistent terminology | "single-serve pods" then "K-cups" | Keep "single-serve pods" throughout |
 | Transitions only when the topic changes | "Great! Let's keep going!" between related questions | Remove, or use only when a new topic starts |
 
-### Voice and tone (proposed starter, needs Onder's confirmation)
+### Voice and tone (confirmed 2026-11-02, decision D-6)
 
 MMC sounds **warm, clear, member-first, and honest**: a friendly product team talking
 to people it respects, not a panel company talking to "respondents".
@@ -292,13 +305,8 @@ to people it respects, not a panel company talking to "respondents".
 | Draft gaps filled: answer choice examples, transitions (v1 repeated the images line), voice and tone starter | Completes the content standards. |
 | Every criterion has an ID and a check type | Findings cite the ID. `[Auto]` rules run instantly and consistently without the model. |
 
-## 6. Open questions for Onder
+## 6. Decisions
 
-1. **Length targets (2.1)** are proposed starting points. Do they match what research leadership expects?
-2. **B5, B6, and B7 as blockers:** comfortable making these launch-blocking (keep-with-reason still available)?
-3. **10.4 "What happens next":** is there a real mechanism to share results back with
-   members (Community home module, notifications)? If not, this criterion should wait.
-4. **10.5 "How was this survey?"** needs research leadership to agree to add it to every survey.
-5. **Voice and tone starter:** confirm, edit, or replace with the official MMC voice guide.
-6. **RedJade's mobile image rendering** (full width? height cap? dark mode?) will be
-   measured in the crawler spike. Thresholds in D6 and D7 may shift slightly after that.
+All open questions were resolved on 2026-11-02. See `decisions.md`. The only pending
+item: D6 and D7 thresholds may be adjusted after the crawler spike measures RedJade's
+mobile image rendering (D-7).

@@ -67,7 +67,7 @@ got resolved. A one-page sign-off packet replaces hours of senior-director revie
 ### v1.5
 
 - Performance import (CSV): completion rate, median time, drop-off by question,
-  member rating from a "How was this survey?" closing question.
+  and time since launch. (A member rating isn't possible inside RedJade, decision D-5.)
 - Predicted vs. actual on the survey's Performance tab and on Home "Learned" cards.
 - Coach accuracy panel inside Guidelines (admin only).
 
@@ -354,7 +354,7 @@ survey at a time.
 | Choice | id, finding_id, picked (original, neutral, shorter, friendlier, custom), reason_code, reason_text, picked_at |
 | Guideline | id, rubric_version, category, title, rule, why, good_example, bad_example, severity, weight, check_type, enabled |
 | GlossaryTerm | id, rubric_version, avoid, use |
-| Performance (v1.5) | id, version_id, completion_rate, median_minutes, dropoff_json, member_rating, responses |
+| Performance (v1.5) | id, version_id, completion_rate, median_minutes, dropoff_json, responses |
 
 ### 8.7 Suggested layout
 
@@ -385,7 +385,7 @@ Every file stays under 600 lines.
 | Choice: original vs. suggestion, and which style | "Which version is better?" | Acceptance rate per guideline and per style. Low-acceptance rules get flagged for review. |
 | Resolved with suggestion vs. resolved your way | Re-check | Whether suggestions are good enough to use verbatim. |
 | Keep-original reasons | Reason chips | Where rules are too strict or miss context (for example, tracker comparability). |
-| Predicted score vs. member rating, completion, drop-off (v1.5) | CSV import | Whether the score predicts real member experience. |
+| Predicted score vs. completion, drop-off, and actual vs. estimated time (v1.5) | CSV import | Whether the score predicts real member behavior. |
 
 Rules for honesty:
 
@@ -393,9 +393,11 @@ Rules for honesty:
 - Show "Need 20+ launched surveys" instead of correlations below that threshold.
 - The app **proposes** weight or rule changes. A guidelines admin approves them,
   which creates a new rubric version.
-- Recommended business process (not product): add a one-question
-  "How was this survey?" (1 to 5) to the end of every MMC survey. It's the cleanest
-  ground truth for the score.
+- Score is normalized over **active** rubric criteria; inactive ones (for example 10.4
+  until the Q4 rewards launch) switch on without re-weighting (`docs/rubric/decisions.md`).
+- A member satisfaction rating can't be added inside RedJade (D-5). A one-tap rating
+  in the MMC app after a completed activity would be the cleanest ground truth; that's
+  an MMC roadmap candidate, outside SurveyCoach.
 
 ## 10. Error handling
 
@@ -430,7 +432,7 @@ The researcher always sees something useful. Deterministic findings never wait o
 | R5 | Researchers may distrust AI findings. | High | Evidence on every finding, consistent results, and a golden-set check (section 14) before rollout. |
 | Q1 | Who owns guidelines edits (admin role)? | Low | v1: anyone can edit, every edit versioned. Revisit when hosted. |
 | Q2 | Sign-off skip policy (for example "90+ and no must-fix skips director review"). | Business | Decision for Onder with Morgan and Sue. Product only enables it. |
-| Q3 | Can the "How was this survey?" closing question be added to all surveys? | Business | Raise with research leadership. |
+| Q3 | Member rating at the end of surveys? | Resolved | Not possible in RedJade (D-5). MMC-app rating is a separate roadmap idea. |
 
 ## 13. Future extension points
 
