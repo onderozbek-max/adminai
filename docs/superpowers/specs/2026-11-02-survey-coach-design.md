@@ -169,6 +169,11 @@ plain-language label. Keyboard: up/down to move, Enter to focus coach.
 - **Copy all suggestions**: copies a per-question change list, ready to apply in
   RedJade. Uses the picked suggestion where one exists, otherwise the first; skips
   findings where the researcher picked their original.
+- **Suggested crop** (image shape findings, rubric 7.2): the coach shows the image
+  cropped to 4:5 around the product (subject box from the AI judge, center crop as
+  fallback). "With fixes" previews it on the phone, and **Download cropped image**
+  saves a file the researcher can upload to RedJade. This is a real fix, not a fake
+  commit. Never upscales: low-resolution findings ask for the original file instead.
 
 Findings that aren't tied to one question (for example, "Members Mark" in two
 places, or total length) appear under an **All copy** / **Whole survey** rail item.
@@ -263,13 +268,20 @@ SurveySnapshot
   -> persist Review + Findings
 ```
 
-**Deterministic checks (v1).** Each is a small, independently tested function:
-estimated minutes vs. promised minutes, question count, grid size on small screens,
-screener position (screen-out after N seconds), scale direction consistency, missing
-negative side on scales, answer option overlap, missing "Other / None" where options
-look non-exhaustive (heuristic), reading level (grade above 8), brand glossary,
-image byte size, image text legibility proxy (image width vs. phone width), intro
-explains purpose, thank-you closes the loop.
+**Deterministic checks (v1).** Each is a small, independently tested function, cited
+by rubric ID: estimated minutes vs. promised minutes, question count, screener
+position, typing load, grid size and scale length, scale direction and balance,
+overlapping ranges, reading level, glossary and content standards (sentence case,
+ALL CAPS, desktop words like "click"), answer-choice length, one-screen fit on
+iPhone SE, links that leave the survey, intro and thank-you presence.
+
+**Image checks (v1, rubric D7 and B7).** Measured on the downloaded file plus the
+crawler's rendered size: aspect ratio (shape), pixel width vs. phone density,
+blur score (edge variance with Pillow and NumPy), stretched or squashed (rendered vs.
+natural ratio), file size and total survey weight, transparency on dark backgrounds,
+and size/shape consistency across image-choice options. The AI judge adds what code
+can't see: correct product, product as hero, background and lighting, polish parity
+between options, and text baked into images.
 
 **AI judge (v1).** Handles judgment calls: leading or loaded wording, double-barreled
 questions, ambiguity and jargon, brand voice, community-guideline tone, image
