@@ -204,7 +204,7 @@ read-only in the review workspace.
   **Mobile experience**, **Brand glossary**.
 - Each rule: ID, title, plain-English rule, why it matters to members, good example,
   bad example, default severity, check type (deterministic or AI), enabled toggle.
-- Ships with a **draft MMC rubric**, clearly labeled draft, until the real criteria are provided.
+- Ships with **MMC Survey Quality Rubric v2** (`docs/rubric/`), loaded as data.
 - Edits create a new rubric version. Reviews record the rubric version they used.
 - Brand glossary: simple "say this, not that" pairs (for example "Members Mark" to
   "Member's Mark", "customer" to "member").
@@ -284,19 +284,20 @@ Friendlier). Rules:
 - Each finding carries: screen ID, guideline ID, severity, evidence quote,
   explanation, member impact, suggestions.
 
-**Scoring.** Member Experience Score 0 to 100. Start at 100 and subtract weighted
-penalties per open finding (must-fix weighs more than worth-improving; weights live
-on the guideline). Floors at 0. Readiness:
+**Scoring.** Member Experience Score 0 to 100, defined by the rubric
+(`docs/rubric/mmc-survey-rubric-v2.md`): nine dimensions, each criterion worth fixed
+points. Rubric **blockers** surface as **Must fix**; criteria that cost points surface
+as **Worth improving**. Readiness (thresholds are rubric data, not code):
 
 | Readiness | Rule |
 |---|---|
-| Needs work | Any open must-fix |
-| Almost ready | Zero open must-fix, score below 85 |
-| Ready to launch | Zero open must-fix, score 85 or above |
+| Needs work | Any open blocker, or score below 60 |
+| Almost ready | No open blockers, score 60 to 79 |
+| Ready to launch | No open blockers, score 80 or above |
 
-"Kept on purpose" must-fix findings don't count as open, but stay visible in the
+"Kept on purpose" blockers don't count as open, but stay visible in the
 packet. **Projected score** recomputes the same function with chosen suggestions
-treated as resolved. Thresholds and weights are config, recalibrated in v1.5.
+treated as resolved. The review hero and the packet also show the **top 3 strengths**.
 
 **Time and fatigue model (deterministic, labeled as an estimate).** Reading time at a
 mobile reading speed plus per-kind interaction time (for example, single choice a
@@ -413,7 +414,7 @@ The researcher always sees something useful. Deterministic findings never wait o
 | R1 | **Crawling a live survey may record a fake response in RedJade**, polluting research data and quotas. | High | Spike first. Prefer RedJade's preview or test link. Never submit the final page. If neither works, mark crawl sessions as test responses or require a preview link. Confirm with the RedJade owner. |
 | R2 | Wibey headless image support for vision checks is unverified. | Medium | Spike first. Fallback: text-only image checks (size, dimensions, alt text) until the gateway is available. |
 | R3 | Crawler picks answers to advance, so it may follow one branch only. | Medium | Show coverage honestly. Prefer options that continue. Branching handled properly by the future API reader. |
-| R4 | Real MMC rubric not yet provided. | Medium | Ship draft rubric labeled draft. Guidelines are data, so swapping needs no code change. |
+| R4 | Rubric v2 has open questions (length targets, B5/B6, 9.4, 9.5, voice). | Medium | Rubric is data; answers change the file, not the code. |
 | R5 | Researchers may distrust AI findings. | High | Evidence on every finding, consistent results, and a golden-set check (section 14) before rollout. |
 | Q1 | Who owns guidelines edits (admin role)? | Low | v1: anyone can edit, every edit versioned. Revisit when hosted. |
 | Q2 | Sign-off skip policy (for example "90+ and no must-fix skips director review"). | Business | Decision for Onder with Morgan and Sue. Product only enables it. |
