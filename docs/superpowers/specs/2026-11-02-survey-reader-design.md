@@ -2,7 +2,53 @@
 
 - **Date:** 2026-11-02
 - **Parent spec:** `2026-11-02-survey-coach-design.md` (this document replaces its section 8.2)
-- **Status:** Draft for review. Section 12 lists the spike that confirms the RedJade-specific parts.
+- **Status:** Revised after spike R1 (`docs/spikes/r1-redjade-findings.md`). Section 0
+  overrides anything below that conflicts with it.
+
+---
+
+## 0. Revision after spike R1: read through RedJade's previewer, never the live link
+
+The spike found that RedJade survey links are **live, anonymous-link surveys** whose
+questions are only delivered after a sign-in that **creates a participant**, with
+progress **saved page by page**. Walking them is never safe. It also found that RedJade
+already has a **previewer** (demo mode, responses not processed, built-in mobile preview)
+that loads the **full questionnaire definition** for a logged-in RedJade user.
+
+**New primary reader: `PreviewReader`.**
+
+| Step | What happens | Access |
+|---|---|---|
+| 1. Resolve | From the pasted survey link, call `GET /api/v1/surveys/event_meta` for title, project and event IDs, locales, live status, and the full **theme** (fonts, sizes, colors, buttons). | Public, read-only; the same call a member's browser makes when the link opens |
+| 2. Researcher session | SurveyCoach keeps a dedicated local browser profile (`/browser-profile/`, git-ignored). The first time, it opens a visible RedJade window and **the researcher signs in themselves**. SurveyCoach never sees or stores the password. If the session expires, the window reopens. | The researcher's own RedJade login |
+| 3. Structure | In that session, load the questionnaire definition the way the previewer does. Extractor 1 (definition data) becomes the **primary and complete** source: every page and branch, logic, randomization settings, media. | Same session |
+| 4. Appearance | Open RedJade's previewer for the questionnaire at phone size and capture every page into a capture bundle (section 3). Demo mode saves nothing. | Same session |
+
+**What stays from the original design:** capture bundles and element tagging (for
+appearance), the generic and AI vision extractors (as a safety net for anything the
+definition doesn't explain), the replica with fidelity check, and the coverage report.
+
+**What changes:**
+
+- The navigator (section 4) runs only **inside the previewer** to reach pages for
+  capture. No backtracking past screen-outs is needed, because the definition already
+  contains every branch and screen-out.
+- Randomization comes from the definition's settings, not from comparing sessions.
+- Languages come from `event_meta.locales`.
+- The public-link crawl is **removed**. Live anonymous links are never signed into.
+
+**Later (hosting):** the official RedJade API replaces steps 2 and 3 with service
+credentials. Appearance then comes from the previewer under a service account, or from
+the theme tokens.
+
+**Gaps introduced by this revision:**
+
+| # | Gap | Resolution |
+|---|---|---|
+| G-15 | A researcher without access to the RedJade project can't read it. | Clear message: "Your RedJade account can't open this project. Ask the project owner to share it." |
+| G-16 | The browser profile holds a RedJade session, which is sensitive. | Local only, git-ignored, never uploaded. Settings has **Sign out of RedJade**, which deletes the profile. |
+| G-17 | Per-user browser sessions don't carry over to a hosted SurveyCoach. | Hosting waits for the RedJade API or a service account (ties to main spec O-1). |
+| G-18 | Exact previewer URL, questionnaire JSON shape, and login method are still unknown. | One observed session with a RedJade login (spike R1b, section 12). |
 
 ---
 
@@ -286,6 +332,18 @@ A review on partial coverage is still useful, but it's never presented as comple
 
 ## 9. Response safety (no fake data in RedJade)
 
+**Confirmed by spike R1:** RedJade creates a participant at sign-in and saves progress
+page by page, and the example surveys are live anonymous links. Rules:
+
+1. **Never sign into a survey link.** SurveyCoach only calls the public, read-only
+   `event_meta` endpoint on survey links.
+2. Questions and appearance come only from RedJade's **previewer** in the researcher's
+   own session, where responses aren't processed (section 0).
+3. Any text typed in the previewer is `SurveyCoach test`, as a belt-and-braces marker.
+4. No member identifiers (`external_id`, `enc`) are ever added to any URL.
+
+The original rules below are kept for history, but they are superseded:
+
 Each crawl is a survey session. Many platforms **save answers page by page**, so even an
 unfinished walk can create a partial response, use up a quota spot, or **use up a
 single-use link**. Rules:
@@ -329,6 +387,23 @@ single-use link**. Rules:
 
 ## 12. Spike R1: what it must answer
 
+**R1 (done, read-only):** see `docs/spikes/r1-redjade-findings.md`. Answered: how links
+work, sign-in creates participants, per-page saves, public metadata and theme, the
+previous network-definition question (definition only after sign-in or in the previewer),
+languages, and the proxy setup.
+
+**R1b (next, needs a RedJade login for one session):** with Onder or a researcher signed in
+to RedJade in a SurveyCoach-controlled browser window, open the previewer for
+`CakeballsDeepDive` and record (redacting auth headers and cookies):
+
+1. The previewer URL, and how `project_id` / `event_id` map to a `questionnaire_id`.
+2. The questionnaire JSON shape: element types, nesting, logic, randomization, media URLs.
+3. Login method and session lifetime.
+4. Previewer navigation: jump to a page? Required-answer validation in demo mode?
+5. The previewer's mobile rendering vs. a real phone (image widths, height caps, dark mode).
+
+The original R1 checklist below is kept for history.
+
 Run against a RedJade **test or preview link** first.
 
 1. Does a test or preview link exist? Are test responses excluded from data and quotas?
@@ -370,6 +445,18 @@ behave in practice found these gaps. Each is resolved above or listed as an open
 | G-14 | The sign-off packet and accessibility: the replica iframe is visual only. | Iframe has a title and is inert; all findings and text are available in the rail and coach for keyboard and screen-reader users. |
 
 ### Open questions for Onder (answers needed before or during the spike)
+
+**Updated after spike R1:**
+
+1. **Do you (or a researcher who can help) have a RedJade login with access to these
+   projects?** Needed for spike R1b and for every researcher using SurveyCoach.
+2. **Does automating a researcher's own RedJade session fit our RedJade contract?**
+3. ~~How does the MMC app open surveys?~~ Partly answered: the sign-in accepts
+   `external_id` and `enc`, likely the member ID and a signed token from the MMC app.
+   Still worth confirming with the iOS team, but no longer blocking.
+4. ~~Other languages?~~ Answered by data: `event_meta.locales` (these three: English only).
+
+Original questions, kept for history:
 
 1. **Does RedJade have test or preview links, and are test responses excluded from data
    and quotas?** This is the gating question for the whole reader.

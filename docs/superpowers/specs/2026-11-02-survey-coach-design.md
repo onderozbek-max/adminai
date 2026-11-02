@@ -263,6 +263,10 @@ class SurveyReader(Protocol):
   Pure extractors turn bundles into the `SurveySnapshot`, the replica, and coverage.
 - `CaptureReader` (v1): capture plus the extractor chain (network definition, RedJade
   adapter rules in YAML, generic accessible-form extractor, AI vision fallback).
+- **Revised after spike R1:** the v1 reader is `PreviewReader`. It resolves the link via
+  public `event_meta`, then reads the full questionnaire and captures pages through
+  RedJade's **previewer** in the researcher's own RedJade session. Live survey links are
+  never signed into (reader design, section 0).
 - `FixtureReader`: loads saved snapshots and bundles (sample survey, Survey Zoo, tests).
 - Future: the RedJade API becomes the **structure** source, merged by question ID;
   appearance still comes from a capture.
@@ -458,7 +462,7 @@ The researcher always sees something useful. Deterministic findings never wait o
 
 | # | Item | Impact | Proposed resolution |
 |---|---|---|---|
-| R1 | **Crawling may pollute RedJade data**: per-page saves, quota use, single-use links. | High | Test or preview links required by default; live links refused (reader design, section 9). Spike confirms mechanics. |
+| R1 | **Walking live RedJade links creates participants and saves progress per page** (confirmed in spike R1). | High | Never sign into survey links; read through RedJade's previewer in the researcher's session (reader design, sections 0 and 9). |
 | R2 | Wibey headless image support for vision checks is unverified. | Medium | Spike first. Fallback: text-only image checks (size, dimensions, alt text) until the gateway is available. |
 | R3 | The navigator walks one qualifying path, so other branches may be unseen. | Medium | Backtracking past screen-outs, honest coverage report. Full branching comes from the future API structure source. |
 | R4 | Rubric thresholds in D6 and D7 may shift after the spike measures RedJade rendering (D-7). | Low | Rubric is data; changes go in the rubric and decision log. |
