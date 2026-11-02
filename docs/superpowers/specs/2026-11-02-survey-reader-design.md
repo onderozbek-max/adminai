@@ -15,6 +15,13 @@ progress **saved page by page**. Walking them is never safe. It also found that 
 already has a **previewer** (demo mode, responses not processed, built-in mobile preview)
 that loads the **full questionnaire definition** for a logged-in RedJade user.
 
+**Who reads:** step 2 below originally used each researcher's own login. Onder rejected
+that: managers, designers, and engineers without RedJade accounts must be able to use
+SurveyCoach. Spike R1b (`docs/spikes/r1b-previewer-findings.md`) confirmed the previewer
+path works and saves nothing, and showed that RedJade shares projects individually. The
+**access model is pending a decision**: a SurveyCoach service account, plus either a
+one-time "share with SurveyCoach" step per project or company-wide visibility.
+
 **New primary reader: `PreviewReader`.**
 
 | Step | What happens | Access |
