@@ -1,0 +1,159 @@
+<h2>Committee round 2: gaps closed, wow added</h2>
+<p class="subtitle">Team insights is cut. New: Play as a member, device and accessibility switcher, projected score, rewrite options, the reading moment, the fix list that verifies itself, and the 2-minute sign-off packet.</p>
+
+<style>
+  .w{font-family:-apple-system,"Segoe UI",Inter,sans-serif;background:#0e141b;color:#e6edf5;font-size:12px;line-height:1.45;text-align:left;border-radius:10px;overflow:hidden}
+  .w *{box-sizing:border-box}
+  .lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7f92a6}
+  .btn{display:inline-block;background:#4da3ff;color:#06121f;font-weight:700;border-radius:99px;padding:6px 13px;margin-right:6px}
+  .btn.g{background:#1b2a3a;color:#c5d3e2;font-weight:600}
+  .chip{display:inline-block;font-size:10px;padding:2px 9px;border-radius:99px;font-weight:600;margin-right:4px}
+  .must{background:#3a1c22;color:#ff9d9d}.sugg{background:#3a2f1a;color:#ffd08a}.good{background:#123a2a;color:#7be0b0}.blue{background:#16263a;color:#7fbcff}.on{background:#4da3ff;color:#06121f}
+  .new{background:#ff7ad9;color:#2a0a22;font-size:9px;font-weight:800;padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:middle}
+  .hero{display:flex;gap:14px;align-items:center;padding:12px 18px;border-bottom:1px solid #1b2733;background:linear-gradient(90deg,#10202f,#0e141b)}
+  .ring{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;position:relative}
+  .ring b{width:50px;height:50px;border-radius:50%;background:#0e141b;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:18px;color:#7be0b0;line-height:1}
+  .ring b small{font-size:9px;color:#7f92a6;margin-top:2px}
+  .hero h4{margin:0;font-size:15px;color:#fff}.hero p{margin:2px 0 0;color:#9fb0c3}
+  .three{display:flex;height:500px}
+  .rail{width:180px;border-right:1px solid #1b2733;flex:none}
+  .ri{padding:8px 12px;border-bottom:1px solid #162230;display:flex;gap:8px}
+  .ri.sel{background:#14263b;box-shadow:inset 3px 0 #4da3ff}
+  .dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex:none}
+  .ri small{display:block;color:#7f92a6}.ri b{color:#e6edf5;font-weight:600}
+  .stage{flex:1;display:flex;flex-direction:column;align-items:center;background:radial-gradient(circle at 50% 45%,#16283c,#0e141b 70%);padding:10px 0}
+  .bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center}
+  .seg{background:#0a121b;border:1px solid #21384f;border-radius:99px;padding:3px;display:flex;gap:2px;font-size:10px}
+  .seg span{padding:3px 9px;border-radius:99px;color:#9fb0c3}.seg span.on{background:#1f3550;color:#fff}
+  .phone{width:196px;height:370px;border-radius:28px;background:#000;padding:7px;box-shadow:0 20px 50px #0008,0 0 0 1px #2a3a4a;margin-top:10px}
+  .scr{background:#fff;border-radius:22px;height:100%;color:#1b1b1b;padding:13px 11px;position:relative;overflow:hidden}
+  .prog{height:4px;background:#e8eef6;border-radius:2px}.prog i{display:block;height:100%;width:27%;background:#0067a0;border-radius:2px}
+  .q{font-size:13px;font-weight:600;margin:10px 0 7px}
+  .op{border:1px solid #d6dde6;border-radius:10px;padding:6px 9px;margin-top:5px;font-size:11px}
+  .fixed{background:#e9f8f0;border-radius:3px;padding:0 2px}
+  .timeline{width:86%;margin-top:10px}
+  .tl{height:8px;border-radius:4px;background:linear-gradient(90deg,#3ecf8e 0%,#3ecf8e 45%,#ffb454 65%,#ff6b6b 100%);position:relative}
+  .tick{position:absolute;top:-4px;width:2px;height:16px;background:#fff}
+  .tlab{display:flex;justify-content:space-between;color:#7f92a6;font-size:10px;margin-top:4px}
+  .coach{width:300px;border-left:1px solid #1b2733;padding:14px;flex:none}
+  .cbox{background:#131d28;border:1px solid #1f2e3d;border-radius:12px;padding:10px;margin-top:8px}
+  .alt{background:#0f2a1f;border:1px solid #1d5b3f;border-radius:12px;padding:10px;margin-top:8px}
+  .alt.dim{background:#131d28;border-color:#1f2e3d;opacity:.85}
+  .ask{display:flex;gap:6px;margin-top:10px}.ask div{flex:1;background:#0a121b;border:1px solid #2a4560;border-radius:10px;padding:7px 10px;color:#6f86a0}
+  /* Reading moment */
+  .read{display:flex;gap:22px;align-items:center;padding:20px 26px}
+  .stream div{background:#131d28;border:1px solid #1f2e3d;border-radius:10px;padding:7px 10px;margin-bottom:6px;width:300px}
+  .stream div.ghost{opacity:.35}
+  /* Fix list */
+  .fl{padding:16px 20px}
+  .row{display:flex;gap:12px;align-items:flex-start;background:#131d28;border:1px solid #1f2e3d;border-radius:12px;padding:11px;margin-top:8px}
+  .chk{width:18px;height:18px;border-radius:5px;border:2px solid #3a5470;flex:none;margin-top:2px}
+  .chk.ok{background:#3ecf8e;border-color:#3ecf8e}
+  .chk.no{background:#ffb454;border-color:#ffb454}
+  /* Packet (light, printable) */
+  .pk{background:#f7f8fa;color:#1d2733;font-family:-apple-system,"Segoe UI",Inter,sans-serif;font-size:12px;text-align:left;padding:22px 26px;border-radius:10px}
+  .pk h3{margin:0;font-size:18px}
+  .pk .card{background:#fff;border:1px solid #e3e8ef;border-radius:12px;padding:12px;margin-top:10px}
+  .pk .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .pk .big{font-size:24px;font-weight:700;color:#0067a0}
+  .pk .pbtn{display:inline-block;border-radius:99px;padding:7px 14px;font-weight:700;margin-right:6px}
+</style>
+
+<div class="mockup">
+<div class="mockup-header">1 · The reading moment<span class="new">NEW</span> &middot; the 60-second wait becomes a show: questions fly onto the phone as they're read</div>
+<div class="mockup-body" style="padding:0"><div class="w"><div class="read">
+  <div class="phone" style="margin:0;height:300px;width:160px"><div class="scr"><div class="prog"><i style="width:60%"></i></div><div class="q" style="font-size:11px">Q9. How did the fit and comfort compare to your usual brand?</div><div class="op">Much better</div><div class="op">About the same</div></div></div>
+  <div>
+    <div style="font-size:16px;color:#fff;font-weight:700">Reading your survey...</div>
+    <div style="color:#9fb0c3;margin:3px 0 10px">Found 9 of about 15 questions &middot; 2 images &middot; 1 screener</div>
+    <div class="stream">
+      <div><span class="chip good">Done</span>Intro &middot; Q1 to Q8 read</div>
+      <div><span class="chip blue">Reading</span>Q9 Fit and comfort</div>
+      <div class="ghost">Checking against 24 MMC guidelines</div>
+      <div class="ghost">Previewing on 3 phones</div>
+    </div>
+  </div>
+</div></div></div>
+</div>
+
+<div class="mockup" style="margin-top:16px">
+<div class="mockup-header">2 · Review workspace, upgraded &middot; "With fixes" on, Play as a member, device switcher, projected score, rewrite options</div>
+<div class="mockup-body" style="padding:0"><div class="w">
+  <div class="hero">
+    <div class="ring" style="background:conic-gradient(#3ecf8e 0 91%,#1f2e3d 91% 100%)"><b>91<small>was 78</small></b></div>
+    <div><h4>With your fixes, this is ready to launch.</h4><p>Members save about 2 minutes and nobody gets screened out late.</p></div>
+    <div style="margin-left:auto;display:flex;gap:16px;align-items:center">
+      <div><b style="display:block;font-size:14px;color:#7be0b0">0</b><span style="font-size:10px;color:#7f92a6">must fix left</span></div>
+      <div><b style="display:block;font-size:14px;color:#fff">7 min</b><span style="font-size:10px;color:#7f92a6">was 9 min</span></div>
+      <span class="btn">Fix list (3)</span>
+    </div>
+  </div>
+  <div class="three">
+    <div class="rail">
+      <div class="ri"><i class="dot" style="background:#3ecf8e"></i><div><b>Intro</b><small>Explains why we ask</small></div></div>
+      <div class="ri sel"><i class="dot" style="background:#3ecf8e"></i><div><b>Q4 Softness</b><small style="color:#7be0b0">Fixed in preview</small></div></div>
+      <div class="ri"><i class="dot" style="background:#3ecf8e"></i><div><b>Q8 Screener</b><small style="color:#7be0b0">Moved to Q2</small></div></div>
+      <div class="ri"><i class="dot" style="background:#ffb454"></i><div><b>Q11 Grid</b><small style="color:#ffd08a">Hard on small phones</small></div></div>
+      <div class="ri"><i class="dot" style="background:#ffb454"></i><div><b>Q12 Photo</b><small style="color:#ffd08a">Text too small</small></div></div>
+      <div class="ri"><i class="dot" style="background:#ffb454"></i><div><b>All copy</b><small style="color:#ffd08a">"Members Mark" x2</small></div></div>
+      <div class="ri"><i class="dot" style="background:#3ecf8e"></i><div><b>Thank you</b><small>Closes the loop</small></div></div>
+    </div>
+    <div class="stage">
+      <div class="bar">
+        <div class="seg"><span>Current</span><span class="on">With fixes</span></div>
+        <div class="seg"><span>iPhone SE</span><span class="on">iPhone 16</span><span>Android XL</span></div>
+        <div class="seg"><span>Large text</span><span>Dark mode</span></div>
+      </div>
+      <div class="phone"><div class="scr">
+        <div class="prog"><i></i></div>
+        <div style="font-size:9px;color:#6b7785;margin-top:4px">Question 4 of 14</div>
+        <div class="q">How would you rate the <span class="fixed">softness</span> of the fabric?</div>
+        <div class="op">Very soft</div><div class="op">Soft</div><div class="op">Neither soft nor rough</div><div class="op">Not very soft</div><div class="op">Not at all soft</div>
+        <div style="position:absolute;bottom:11px;left:11px;right:11px;background:#0067a0;color:#fff;text-align:center;border-radius:99px;padding:7px;font-weight:600;font-size:11px">Next</div>
+      </div></div>
+      <div class="timeline">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><span class="btn" style="padding:4px 11px">Play as a member<span class="new">NEW</span></span><span style="color:#9fb0c3;font-size:10px">Member reaches Q4 at 1:40</span></div>
+        <div class="tl"><span class="tick" style="left:24%"></span></div>
+        <div class="tlab"><span>0:00</span><span>Fresh</span><span>Fatigue builds</span><span>7:00</span></div>
+      </div>
+    </div>
+    <div class="coach">
+      <span class="chip good">Fixed in preview</span><span class="chip blue">Bias &middot; Criteria 2.1</span>
+      <div class="cbox"><b style="color:#fff">Pick the wording you like</b><div style="color:#9fb0c3;margin-top:2px">Three rewrites, same meaning.</div></div>
+      <div class="alt"><div class="lbl" style="color:#7be0b0">Neutral &middot; selected</div><div style="color:#fff;margin-top:3px">How would you rate the softness of the fabric?</div></div>
+      <div class="alt dim"><div class="lbl">Shorter</div><div style="color:#dbe6f3;margin-top:3px">Rate the fabric's softness.</div></div>
+      <div class="alt dim"><div class="lbl">Friendlier</div><div style="color:#dbe6f3;margin-top:3px">How soft did the fabric feel to you?</div></div>
+      <div class="ask"><div>Ask the coach: "mention the waistband"</div><span class="btn">Go</span></div>
+      <div style="margin-top:10px"><span class="btn g">Undo fix</span><span class="btn g">I disagree</span></div>
+    </div>
+  </div>
+</div></div>
+</div>
+
+<div class="split" style="margin-top:16px">
+<div class="mockup">
+<div class="mockup-header">3 · Fix list<span class="new">NEW</span> &middot; copy into RedJade, re-check, it verifies itself</div>
+<div class="mockup-body" style="padding:0"><div class="w"><div class="fl">
+  <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:15px;color:#fff">Your fix list &middot; 3 changes</b><span class="btn">I've updated RedJade, re-check</span></div>
+  <div style="color:#9fb0c3;margin-top:2px">After re-checking: 2 of 3 changes found in version 3</div>
+  <div class="row"><i class="chk ok"></i><div style="flex:1"><b style="color:#fff">Q4 &middot; Replace question text</b><div style="color:#9fb0c3">"How would you rate the softness of the fabric?"</div><span class="chip good" style="margin-top:5px">Found in v3</span></div><span class="btn g">Copy</span></div>
+  <div class="row"><i class="chk ok"></i><div style="flex:1"><b style="color:#fff">Q8 &middot; Move screener to position 2</b><div style="color:#9fb0c3">Members screened out at 0:40 instead of 4:10</div><span class="chip good" style="margin-top:5px">Found in v3</span></div><span class="btn g">Copy</span></div>
+  <div class="row"><i class="chk no"></i><div style="flex:1"><b style="color:#fff">All copy &middot; "Members Mark" to "Member's Mark"</b><div style="color:#9fb0c3">2 places: Intro, Q13</div><span class="chip sugg" style="margin-top:5px">Still in Q13</span></div><span class="btn g">Copy</span></div>
+</div></div></div>
+</div>
+<div class="mockup">
+<div class="mockup-header">4 · Sign-off packet<span class="new">NEW</span> &middot; one link, light and printable, 2 minutes for a director</div>
+<div class="mockup-body" style="padding:0"><div class="pk">
+  <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#6b7785">Sign-off request from Dana &middot; Boxer Briefs IHUT v3</div>
+  <h3 style="margin-top:4px">Ready to launch. Coach and researcher agree.</h3>
+  <div class="g3" style="margin-top:10px">
+    <div class="card"><div class="big">91</div>Member Experience</div>
+    <div class="card"><div class="big">7 min</div>for members</div>
+    <div class="card"><div class="big">0</div>must-fix left</div>
+  </div>
+  <div class="card"><b>What changed since v1</b><div style="color:#4a5868;margin-top:3px">8 fixes applied &middot; screener moved earlier &middot; 1 grid split into 3 questions</div></div>
+  <div class="card"><b>Kept on purpose (1)</b><div style="color:#4a5868;margin-top:3px">Q11 grid: "Matches last year's tracker for comparability." &middot; Dana</div></div>
+  <div style="margin-top:12px"><span class="pbtn" style="background:#0067a0;color:#fff">Approve</span><span class="pbtn" style="background:#e8eef6;color:#0067a0">Request changes</span><span style="color:#6b7785">Tap any question to see the phone view</span></div>
+</div></div>
+</div>
+</div>

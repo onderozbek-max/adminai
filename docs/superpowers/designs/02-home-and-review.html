@@ -1,0 +1,154 @@
+<h2>Committee redesign: put the member's phone at the center</h2>
+<p class="subtitle">Biggest committee call: researchers write surveys, but members take them on a phone. So the phone preview becomes the hero of the review screen, and the score becomes a "Member Experience Score". Two key screens below.</p>
+
+<style>
+  .w{font-family:-apple-system,"Segoe UI",Inter,sans-serif;background:#0e141b;color:#e6edf5;display:flex;font-size:12px;line-height:1.45;text-align:left;border-radius:10px;overflow:hidden}
+  .w *{box-sizing:border-box}
+  .nav{width:150px;background:#0a0f15;border-right:1px solid #1b2733;padding:14px 10px;display:flex;flex-direction:column;gap:3px;flex:none}
+  .logo{font-weight:800;font-size:14px;padding:2px 8px 12px;color:#fff}.logo span{color:#4da3ff}
+  .ni{padding:7px 9px;border-radius:8px;color:#9fb0c3}
+  .ni.on{background:#16263a;color:#fff;box-shadow:inset 3px 0 #4da3ff}
+  .nsep{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#5b6d80;padding:12px 9px 4px}
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7f92a6}
+  .btn{display:inline-block;background:#4da3ff;color:#06121f;font-weight:700;border-radius:99px;padding:7px 14px;margin-right:6px}
+  .btn.g{background:#1b2a3a;color:#c5d3e2;font-weight:600}
+  .chip{display:inline-block;font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600}
+  .must{background:#3a1c22;color:#ff9d9d}.sugg{background:#3a2f1a;color:#ffd08a}.good{background:#123a2a;color:#7be0b0}.blue{background:#16263a;color:#7fbcff}
+  /* Home */
+  .paste{margin:18px 22px 10px;padding:18px;border-radius:16px;background:linear-gradient(120deg,#13263b,#101c29);border:1px solid #21384f}
+  .paste h4{margin:0 0 4px;font-size:17px;color:#fff}
+  .inp{display:flex;gap:8px;margin-top:10px}
+  .inp div{flex:1;background:#0a121b;border:1px solid #2a4560;border-radius:10px;padding:9px 12px;color:#6f86a0}
+  .cols{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:6px 22px 18px}
+  .col h5{margin:0 0 6px;font-size:11px;color:#9fb0c3;font-weight:600}
+  .sc{background:#131d28;border:1px solid #1f2e3d;border-radius:12px;padding:10px;margin-bottom:8px}
+  .sc b{color:#fff;display:block;font-size:12px}
+  .sc small{color:#7f92a6}
+  .mini{display:inline-flex;width:26px;height:26px;border-radius:50%;align-items:center;justify-content:center;font-size:10px;font-weight:700;float:right}
+  /* Review */
+  .hero{display:flex;gap:14px;align-items:center;padding:12px 18px;border-bottom:1px solid #1b2733;background:linear-gradient(90deg,#10202f,#0e141b)}
+  .ring{width:64px;height:64px;border-radius:50%;background:conic-gradient(#4da3ff 0 78%,#1f2e3d 78% 100%);display:flex;align-items:center;justify-content:center;flex:none}
+  .ring b{width:50px;height:50px;border-radius:50%;background:#0e141b;display:flex;align-items:center;justify-content:center;font-size:19px;color:#4da3ff}
+  .hero h4{margin:0;font-size:15px;color:#fff}.hero p{margin:2px 0 0;color:#9fb0c3}
+  .kp{margin-left:auto;display:flex;gap:16px}.kp b{display:block;font-size:14px;color:#fff}.kp span{font-size:10px;color:#7f92a6}
+  .three{display:flex;min-height:0;height:470px}
+  .rail{width:200px;border-right:1px solid #1b2733;flex:none}
+  .ri{padding:8px 12px;border-bottom:1px solid #162230;display:flex;gap:8px}
+  .ri.on{background:#14263b;box-shadow:inset 3px 0 #4da3ff}
+  .dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex:none}
+  .ri small{display:block;color:#7f92a6}.ri b{color:#e6edf5;font-weight:600}
+  .stage{flex:1;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#16283c,#0e141b 70%);position:relative}
+  .phone{width:210px;height:420px;border-radius:30px;background:#000;padding:8px;box-shadow:0 20px 50px #0008,0 0 0 1px #2a3a4a}
+  .scr{background:#fff;border-radius:23px;height:100%;color:#1b1b1b;padding:14px 12px;position:relative;overflow:hidden}
+  .prog{height:4px;background:#e8eef6;border-radius:2px}.prog i{display:block;height:100%;width:27%;background:#0067a0;border-radius:2px}
+  .q{font-size:13px;font-weight:600;margin:12px 0 8px}
+  .hl{outline:2px dashed #ff6b6b;outline-offset:2px;border-radius:3px}
+  .op{border:1px solid #d6dde6;border-radius:10px;padding:7px 10px;margin-top:6px;font-size:11px}
+  .pimg{height:70px;border-radius:10px;background:linear-gradient(135deg,#dfe7f1,#c6d3e3);display:flex;align-items:center;justify-content:center;color:#5a6b80;font-size:10px}
+  .pin{position:absolute;background:#ff6b6b;color:#fff;font-weight:700;width:18px;height:18px;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center}
+  .tog{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#0a121b;border:1px solid #21384f;border-radius:99px;padding:3px;display:flex;gap:2px;font-size:10px}
+  .tog span{padding:3px 10px;border-radius:99px;color:#9fb0c3}.tog span.on{background:#1f3550;color:#fff}
+  .coach{width:290px;border-left:1px solid #1b2733;padding:14px;flex:none}
+  .cbox{background:#131d28;border:1px solid #1f2e3d;border-radius:12px;padding:11px;margin-top:8px}
+  .fix{background:#0f2a1f;border:1px solid #1d5b3f;border-radius:12px;padding:11px;margin-top:8px}
+  mark{background:#ffd9d9;color:#8a1c1c;border-radius:3px;padding:0 2px}
+  ins{background:#14452f;color:#9ff0c8;text-decoration:none;border-radius:3px;padding:0 2px}
+</style>
+
+<div class="mockup">
+<div class="mockup-header">Screen 1 · Home: "My surveys". Paste box is the front door; every survey moves through a visible pipeline.</div>
+<div class="mockup-body" style="padding:0">
+<div class="w">
+  <div class="nav">
+    <div class="logo">Survey<span>Coach</span></div>
+    <div class="ni on">My surveys</div>
+    <div class="ni">Team insights</div>
+    <div class="nsep">Library</div>
+    <div class="ni">Guidelines</div>
+    <div class="ni">Great examples</div>
+    <div class="nsep">&nbsp;</div>
+    <div class="ni">Settings</div>
+  </div>
+  <div class="main">
+    <div class="paste">
+      <h4>Good afternoon, Dana. What are we checking today?</h4>
+      <div style="color:#9fb0c3">Paste a RedJade link. You'll see it on a member's phone in about a minute.</div>
+      <div class="inp"><div>https://survey.redjade.net/s/...</div><span class="btn">Check my survey</span></div>
+    </div>
+    <div class="cols">
+      <div class="col"><h5>In progress &middot; 2</h5>
+        <div class="sc"><span class="mini" style="background:#3a2f1a;color:#ffd08a">78</span><b>Boxer Briefs IHUT</b><small>2 must-fix &middot; reviewed 2m ago</small></div>
+        <div class="sc"><span class="mini" style="background:#3a1c22;color:#ff9d9d">61</span><b>Sparkling Water Concept</b><small>4 must-fix &middot; yesterday</small></div>
+      </div>
+      <div class="col"><h5>Ready to launch &middot; 1</h5>
+        <div class="sc"><span class="mini" style="background:#123a2a;color:#7be0b0">92</span><b>Trail Mix Taste Test</b><small>Shared with Morgan &middot; approved</small></div>
+      </div>
+      <div class="col"><h5>Live &middot; 2</h5>
+        <div class="sc"><b>Paper Towels Usage</b><small>Day 3 &middot; 41% completing &middot; on track</small></div>
+        <div class="sc"><b>Laundry Pods Screener</b><small>Day 6 &middot; drop-off at Q8</small></div>
+      </div>
+      <div class="col"><h5>Learned &middot; 6</h5>
+        <div class="sc"><b>Coffee Pods Survey</b><small>Predicted 84 &middot; members rated 4.6/5</small></div>
+        <div class="sc"><b>Olive Oil IHUT</b><small>Predicted 70 &middot; 3 lessons saved</small></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="mockup" style="margin-top:18px">
+<div class="mockup-header">Screen 2 · Review workspace: questions | the member's phone | the coach. Pins on the phone show exactly where the problem is.</div>
+<div class="mockup-body" style="padding:0">
+<div class="w">
+  <div class="main">
+    <div class="hero">
+      <div class="ring"><b>78</b></div>
+      <div>
+        <h4>Almost ready, Dana. Fix 2 things members would trip on.</h4>
+        <p>Boxer Briefs IHUT &middot; version 2 &middot; checked against MMC Guidelines v3</p>
+      </div>
+      <div class="kp">
+        <div><b style="color:#ff9d9d">2</b><span>must fix</span></div>
+        <div><b style="color:#ffd08a">3</b><span>worth improving</span></div>
+        <div><b>9 min</b><span>for members (goal 7)</span></div>
+        <div><span class="btn g">Share for sign-off</span></div>
+      </div>
+    </div>
+    <div class="three">
+      <div class="rail">
+        <div class="ri"><i class="dot" style="background:#3ecf8e"></i><div><b>Intro</b><small>Explains why we ask</small></div></div>
+        <div class="ri"><i class="dot" style="background:#3ecf8e"></i><div><b>Q1-Q3</b><small>Looks great</small></div></div>
+        <div class="ri on"><i class="dot" style="background:#ff6b6b"></i><div><b>Q4 Softness</b><small style="color:#ff9d9d">Leading wording</small></div></div>
+        <div class="ri"><i class="dot" style="background:#ff6b6b"></i><div><b>Q8 Screener</b><small style="color:#ff9d9d">Disqualifies too late</small></div></div>
+        <div class="ri"><i class="dot" style="background:#ffb454"></i><div><b>Q9 Fit</b><small style="color:#ffd08a">Asks two things</small></div></div>
+        <div class="ri"><i class="dot" style="background:#ffb454"></i><div><b>Q11 Grid</b><small style="color:#ffd08a">Hard to use on phone</small></div></div>
+        <div class="ri"><i class="dot" style="background:#ffb454"></i><div><b>Q12 Photo</b><small style="color:#ffd08a">Text unreadable on phone</small></div></div>
+        <div class="ri"><i class="dot" style="background:#3ecf8e"></i><div><b>Thank you</b><small>Closes the loop</small></div></div>
+      </div>
+      <div class="stage">
+        <div class="tog"><span class="on">Current</span><span>With fixes</span></div>
+        <div class="phone"><div class="scr">
+          <div class="prog"><i></i></div>
+          <div style="font-size:9px;color:#6b7785;margin-top:4px">Question 4 of 15</div>
+          <div class="q">How much did you <mark class="hl">love</mark> the soft fabric?</div>
+          <div class="pin" style="top:52px;right:6px">1</div>
+          <div class="op">Not at all</div><div class="op">A little</div><div class="op">A lot</div><div class="op">Completely</div>
+          <div class="pin" style="top:205px;right:6px">2</div>
+          <div class="pimg" style="margin-top:10px">Fabric close-up photo</div>
+          <div style="position:absolute;bottom:12px;left:12px;right:12px;background:#0067a0;color:#fff;text-align:center;border-radius:99px;padding:8px;font-weight:600;font-size:11px">Next</div>
+        </div></div>
+      </div>
+      <div class="coach">
+        <span class="chip must">Must fix &middot; Bias</span>
+        <div class="cbox"><b style="color:#fff">1. "Love" nudges members to say yes</b><div style="color:#b7c5d4;margin-top:3px">Members feel there's a right answer, so results skew positive and the business team gets a rosier picture than reality.</div><div style="color:#7f92a6;margin-top:6px;font-size:10px">Guideline: Neutral wording (Survey Criteria 2.1)</div></div>
+        <div class="cbox"><b style="color:#fff">2. The scale has no negative side</b><div style="color:#b7c5d4;margin-top:3px">Members who disliked it have nowhere honest to go.</div></div>
+        <div class="fix"><div class="lbl" style="color:#7be0b0">Suggested rewrite</div><div style="color:#fff;margin-top:4px">How would you rate the <ins>softness</ins> of the fabric?</div><div style="color:#9ff0c8;font-size:11px;margin-top:3px">Very soft / Soft / Neither / Not very soft / Not at all soft</div>
+          <div style="margin-top:9px"><span class="btn">Add to my fix list</span><span class="btn g">I disagree</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>

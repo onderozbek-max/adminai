@@ -1,0 +1,57 @@
+<h2>No fake commits: copy, edit in RedJade, re-check</h2>
+<p class="subtitle">No accept, apply, or fix-list states. The coach suggests, you copy, you edit in RedJade, and re-checking the same link tells you what got resolved. "With fixes" stays as a pure preview.</p>
+
+<style>
+  .w{font-family:-apple-system,"Segoe UI",Inter,sans-serif;background:#0e141b;color:#e6edf5;font-size:12px;line-height:1.45;text-align:left;border-radius:10px;overflow:hidden}
+  .w *{box-sizing:border-box}
+  .lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7f92a6}
+  .btn{display:inline-block;background:#4da3ff;color:#06121f;font-weight:700;border-radius:99px;padding:6px 13px;margin-right:6px}
+  .btn.g{background:#1b2a3a;color:#c5d3e2;font-weight:600}
+  .btn.s{padding:3px 10px;font-size:11px}
+  .chip{display:inline-block;font-size:10px;padding:2px 9px;border-radius:99px;font-weight:600;margin-right:4px}
+  .must{background:#3a1c22;color:#ff9d9d}.good{background:#123a2a;color:#7be0b0}.blue{background:#16263a;color:#7fbcff}.sugg{background:#3a2f1a;color:#ffd08a}
+  .cbox{background:#131d28;border:1px solid #1f2e3d;border-radius:12px;padding:11px;margin-top:8px}
+  .alt{background:#131d28;border:1px solid #1f2e3d;border-radius:12px;padding:10px;margin-top:8px;display:flex;gap:10px;align-items:flex-start}
+  .alt.sel{background:#0f2a1f;border-color:#1d5b3f}
+  .alt div{flex:1}
+  .banner{display:flex;gap:16px;align-items:center;padding:14px 18px;background:linear-gradient(90deg,#123024,#0e141b);border-bottom:1px solid #1b2733}
+  .num b{display:block;font-size:18px}.num span{font-size:10px;color:#7f92a6}
+  .row{display:flex;gap:10px;align-items:center;padding:9px 18px;border-bottom:1px solid #162230}
+</style>
+
+<div class="split">
+
+<div class="mockup">
+<div class="mockup-header">Coach panel: suggest and copy, nothing to approve</div>
+<div class="mockup-body" style="padding:0"><div class="w" style="padding:14px">
+  <span class="chip must">Must fix</span><span class="chip blue">Bias &middot; Criteria 2.1</span>
+  <div class="cbox"><b style="color:#fff">"Love" nudges members to say yes</b><div style="color:#b7c5d4;margin-top:3px">Members sense a right answer, so results skew positive.</div></div>
+  <div class="lbl" style="margin-top:12px">Suggested wording &middot; pick one to preview on the phone</div>
+  <div class="alt sel"><div><div class="lbl" style="color:#7be0b0">Neutral &middot; previewing</div><div style="color:#fff;margin-top:3px">How would you rate the softness of the fabric?</div></div><span class="btn s">Copy</span></div>
+  <div class="alt"><div><div class="lbl">Shorter</div><div style="color:#dbe6f3;margin-top:3px">Rate the fabric's softness.</div></div><span class="btn g s">Copy</span></div>
+  <div class="alt"><div><div class="lbl">Friendlier</div><div style="color:#dbe6f3;margin-top:3px">How soft did the fabric feel to you?</div></div><span class="btn g s">Copy</span></div>
+  <div style="margin-top:12px;color:#7f92a6">Edit it in RedJade, then hit <b style="color:#c5d3e2">Re-check</b>. We'll spot what changed.</div>
+  <div style="margin-top:10px"><span class="btn g s">Copy all suggestions</span><span class="btn g s">Keep as is...</span></div>
+</div></div>
+</div>
+
+<div class="mockup">
+<div class="mockup-header">Re-check result: the version diff IS the fix list</div>
+<div class="mockup-body" style="padding:0"><div class="w">
+  <div class="banner">
+    <div><div style="font-size:15px;font-weight:700;color:#fff">Version 3 found. Nice work, Dana.</div><div style="color:#9fb0c3">Score went from 78 to 89</div></div>
+    <div style="margin-left:auto;display:flex;gap:16px">
+      <div class="num"><b style="color:#7be0b0">4</b><span>resolved</span></div>
+      <div class="num"><b style="color:#ffd08a">1</b><span>still open</span></div>
+      <div class="num"><b style="color:#9fb0c3">0</b><span>new issues</span></div>
+    </div>
+  </div>
+  <div class="row"><span class="chip good">Resolved</span><b style="color:#fff">Q4</b><span style="color:#9fb0c3">Leading wording is gone</span></div>
+  <div class="row"><span class="chip good">Resolved</span><b style="color:#fff">Q8</b><span style="color:#9fb0c3">Screener now at Q2</span></div>
+  <div class="row"><span class="chip good">Resolved</span><b style="color:#fff">Q9</b><span style="color:#9fb0c3">Split into two questions</span></div>
+  <div class="row"><span class="chip good">Resolved</span><b style="color:#fff">Intro</b><span style="color:#9fb0c3">"Member's Mark" spelled right</span></div>
+  <div class="row"><span class="chip sugg">Still open</span><b style="color:#fff">Q13</b><span style="color:#9fb0c3">"Members Mark" still here</span><span class="btn g s" style="margin-left:auto">Copy fix</span></div>
+</div></div>
+</div>
+
+</div>

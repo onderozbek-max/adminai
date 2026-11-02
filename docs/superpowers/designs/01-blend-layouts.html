@@ -1,0 +1,150 @@
+<h2>The blend: dark cockpit shell, Coach's brain</h2>
+<p class="subtitle">Dark navigation and clean list from the Cockpit. Score ring, friendly voice, and question-by-question problem and fix from the Coach. "Findings: 7" is replaced by plain-language numbers. Two layout options for the review screen. Click to pick.</p>
+
+<style>
+  .s{font-family:-apple-system,"Segoe UI",Inter,sans-serif;background:#0e141b;color:#e6edf5;display:flex;height:560px;font-size:12px;line-height:1.45;text-align:left;border-radius:10px;overflow:hidden}
+  .s *{box-sizing:border-box}
+  .nav{width:168px;background:#0a0f15;border-right:1px solid #1b2733;padding:14px 10px;display:flex;flex-direction:column;gap:3px}
+  .logo{font-weight:800;font-size:14px;padding:2px 8px 12px;color:#fff}
+  .logo span{color:#4da3ff}
+  .ni{padding:7px 9px;border-radius:8px;color:#9fb0c3;display:flex;gap:8px;align-items:center}
+  .ni i{width:13px;height:13px;border-radius:4px;background:#1f2e3d;display:inline-block}
+  .ni.on{background:#16263a;color:#fff}.ni.on i{background:#4da3ff}
+  .ni .badge{margin-left:auto;background:#ff6b6b;color:#fff;border-radius:99px;font-size:9px;padding:0 6px;font-weight:700}
+  .nsep{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#5b6d80;padding:12px 9px 4px}
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .hero{display:flex;gap:16px;align-items:center;padding:14px 18px;border-bottom:1px solid #1b2733;background:linear-gradient(90deg,#10202f,#0e141b)}
+  .ring{width:70px;height:70px;border-radius:50%;background:conic-gradient(#4da3ff 0 78%,#1f2e3d 78% 100%);display:flex;align-items:center;justify-content:center;flex:none}
+  .ring b{width:54px;height:54px;border-radius:50%;background:#0e141b;display:flex;align-items:center;justify-content:center;font-size:20px;color:#4da3ff}
+  .hero h4{margin:0;font-size:15px;color:#fff}
+  .hero p{margin:2px 0 0;color:#9fb0c3}
+  .stats{margin-left:auto;display:flex;gap:18px}
+  .stat b{display:block;font-size:15px;color:#fff}.stat span{color:#7f92a6;font-size:10px}
+  .path{display:flex;gap:4px;margin-top:7px;align-items:center;color:#7f92a6;font-size:10px}
+  .path u{width:30px;height:5px;border-radius:3px;background:#1f2e3d;text-decoration:none;display:inline-block}
+  .path u.d{background:#4da3ff}
+  .body{flex:1;display:flex;min-height:0}
+  .list{width:262px;border-right:1px solid #1b2733;overflow:hidden}
+  .li{padding:9px 14px;border-bottom:1px solid #162230;display:flex;gap:9px}
+  .li.on{background:#14263b;box-shadow:inset 3px 0 #4da3ff}
+  .st{width:9px;height:9px;border-radius:50%;margin-top:4px;flex:none}
+  .r{background:#ff6b6b}.a{background:#ffb454}.g{background:#3ecf8e}
+  .li small{display:block;color:#7f92a6}
+  .li b{color:#e6edf5;font-weight:600}
+  .detail{flex:1;padding:16px 20px;overflow:hidden}
+  .qbox{background:#131d28;border:1px solid #1f2e3d;border-radius:12px;padding:12px 14px}
+  .tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:99px;background:#2a1d24;color:#ff8f8f;font-weight:600}
+  .tag.b{background:#16263a;color:#7fbcff}
+  .opt{padding:4px 9px;border:1px solid #243547;border-radius:8px;margin-top:4px;color:#b7c5d4}
+  .fix{background:#0f2a1f;border:1px solid #1d5b3f;border-radius:12px;padding:12px 14px;margin-top:10px}
+  .btn{display:inline-block;background:#4da3ff;color:#06121f;font-weight:700;border-radius:99px;padding:6px 14px;margin-top:8px;margin-right:6px}
+  .btn.g{background:#1b2a3a;color:#c5d3e2;font-weight:600}
+  mark{background:#5a2a2a;color:#ffb3b3;border-radius:3px;padding:0 2px}
+  ins{background:#14452f;color:#9ff0c8;text-decoration:none;border-radius:3px;padding:0 2px}
+  .feed{flex:1;padding:14px 20px;overflow:hidden}
+  .step{display:flex;gap:6px;margin-bottom:10px}
+  .step span{padding:4px 10px;border-radius:99px;background:#16212d;color:#7f92a6;font-size:10px}
+  .step span.on{background:#4da3ff;color:#06121f;font-weight:700}
+  .diff{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .diff>div{border-radius:12px;padding:12px}
+</style>
+
+<div class="options">
+
+<div class="mockup" data-choice="master-detail" onclick="toggleSelect(this)">
+<div class="mockup-header">Layout 1 · Question list + detail (everything visible, jump anywhere)</div>
+<div class="mockup-body" style="padding:0">
+<div class="s">
+  <div class="nav">
+    <div class="logo">Survey<span>Coach</span></div>
+    <div class="ni on"><i></i>Reviews</div>
+    <div class="ni"><i></i>New review</div>
+    <div class="ni"><i></i>Performance</div>
+    <div class="nsep">Setup</div>
+    <div class="ni"><i></i>Guidelines</div>
+    <div class="ni"><i></i>Settings</div>
+  </div>
+  <div class="main">
+    <div class="hero">
+      <div class="ring"><b>78</b></div>
+      <div>
+        <h4>Good start, Dana. Three fixes and this is ready.</h4>
+        <p>MMC_Sensory_Men'sBoxerBriefs_Oct26_V1 &middot; reviewed 2 min ago</p>
+        <div class="path"><u class="d"></u><u></u><u></u><u></u> &nbsp;3 fixes to reach 90</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><b>3 of 15</b><span>questions need attention</span></div>
+        <div class="stat"><b>9 min</b><span>to complete (goal 7)</span></div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="list">
+        <div class="li"><i class="st g"></i><div><b>Q1</b> Welcome<small>Looks great</small></div></div>
+        <div class="li"><i class="st g"></i><div><b>Q2</b> Usage frequency<small>Looks great</small></div></div>
+        <div class="li"><i class="st g"></i><div><b>Q3</b> Overall rating<small>Looks great</small></div></div>
+        <div class="li on"><i class="st r"></i><div><b>Q4</b> Softness<small style="color:#ff9d9d">Leading wording</small></div></div>
+        <div class="li"><i class="st g"></i><div><b>Q5</b> Fit<small>Looks great</small></div></div>
+        <div class="li"><i class="st a"></i><div><b>Q9</b> Fit and comfort<small style="color:#ffd08a">Asks two things at once</small></div></div>
+        <div class="li"><i class="st a"></i><div><b>Q12</b> Waistband photo<small style="color:#ffd08a">Image has no description</small></div></div>
+        <div class="li"><i class="st g"></i><div><b>Q13</b> Purchase intent<small>Looks great</small></div></div>
+      </div>
+      <div class="detail">
+        <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:14px;color:#fff">Question 4</b><span class="tag">Leading wording &middot; Bias</span></div>
+        <div class="qbox" style="margin-top:10px">
+          <div style="color:#7f92a6;font-size:10px;margin-bottom:4px">WHAT MEMBERS SEE</div>
+          <div style="font-size:14px;color:#fff">How much did you <mark>love</mark> the soft fabric?</div>
+          <div class="opt">Not at all &nbsp;&middot;&nbsp; A little &nbsp;&middot;&nbsp; A lot &nbsp;&middot;&nbsp; Completely</div>
+        </div>
+        <div style="margin-top:10px;color:#b7c5d4"><b style="color:#ff9d9d">What's off:</b> "Love" tells members the right answer is positive, and the scale has no negative option. That skews results upward.</div>
+        <div class="fix">
+          <div style="color:#7be0b0;font-size:10px;margin-bottom:4px">TRY THIS</div>
+          <div style="font-size:14px;color:#fff">How would you rate the <ins>softness</ins> of the fabric?</div>
+          <div class="opt" style="border-color:#1d5b3f">Very soft &middot; Soft &middot; Neither &middot; Not soft &middot; Not soft at all</div>
+          <span class="btn">Use this fix</span><span class="btn g">Copy</span><span class="btn g">Not now</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="mockup" data-choice="guided" onclick="toggleSelect(this)">
+<div class="mockup-header">Layout 2 · Guided "one fix at a time" (calm, focused, momentum builds)</div>
+<div class="mockup-body" style="padding:0">
+<div class="s">
+  <div class="nav">
+    <div class="logo">Survey<span>Coach</span></div>
+    <div class="ni on"><i></i>Reviews</div>
+    <div class="ni"><i></i>New review</div>
+    <div class="ni"><i></i>Performance</div>
+    <div class="nsep">Setup</div>
+    <div class="ni"><i></i>Guidelines</div>
+    <div class="ni"><i></i>Settings</div>
+  </div>
+  <div class="main">
+    <div class="hero">
+      <div class="ring"><b>78</b></div>
+      <div>
+        <h4>Fix 1 of 3 &middot; you're doing great</h4>
+        <p>Each fix lifts your score. Finish all three to reach about 90.</p>
+        <div class="path"><u class="d"></u><u></u><u></u> &nbsp;+5 points if you fix this one</div>
+      </div>
+      <div class="stats"><div class="stat"><b>9 min</b><span>to complete (goal 7)</span></div></div>
+    </div>
+    <div class="feed">
+      <div class="step"><span class="on">Q4 Softness</span><span>Q9 Fit and comfort</span><span>Q12 Photo</span><span>All 15 questions</span></div>
+      <div class="tag" style="margin-bottom:8px">Leading wording</div>
+      <div style="color:#b7c5d4">"Love" tells members the right answer is positive, so results skew upward.</div>
+      <div class="diff">
+        <div style="background:#2a1d24;border:1px solid #5a2a2a"><div style="color:#ff9d9d;font-size:10px;margin-bottom:4px">NOW</div><div style="font-size:14px;color:#fff">How much did you <mark>love</mark> the soft fabric?</div><div class="opt">Not at all &middot; A little &middot; A lot &middot; Completely</div></div>
+        <div style="background:#0f2a1f;border:1px solid #1d5b3f"><div style="color:#7be0b0;font-size:10px;margin-bottom:4px">SUGGESTED</div><div style="font-size:14px;color:#fff">How would you rate the <ins>softness</ins> of the fabric?</div><div class="opt" style="border-color:#1d5b3f">Very soft &middot; Soft &middot; Neither &middot; Not soft &middot; Not soft at all</div></div>
+      </div>
+      <div style="margin-top:14px"><span class="btn">Use this fix and continue</span><span class="btn g">Copy</span><span class="btn g">Skip, I disagree</span></div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+</div>

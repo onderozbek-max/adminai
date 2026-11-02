@@ -1,0 +1,43 @@
+<h2>"Which version is better?" Your call teaches the coach</h2>
+<p class="subtitle">Each finding asks the researcher to pick: their original, or one of the suggestions. No approve, no commit. The pick drives the phone preview, the packet, and how the coach learns which fixes are actually good.</p>
+
+<style>
+  .w{font-family:-apple-system,"Segoe UI",Inter,sans-serif;background:#0e141b;color:#e6edf5;font-size:12px;line-height:1.45;text-align:left;border-radius:10px;overflow:hidden;padding:16px}
+  .w *{box-sizing:border-box}
+  .lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#7f92a6}
+  .chip{display:inline-block;font-size:10px;padding:2px 9px;border-radius:99px;font-weight:600;margin-right:4px}
+  .must{background:#3a1c22;color:#ff9d9d}.blue{background:#16263a;color:#7fbcff}
+  .v{display:flex;gap:10px;align-items:flex-start;border:1px solid #1f2e3d;background:#131d28;border-radius:12px;padding:10px;margin-top:8px}
+  .v.sel{border-color:#4da3ff;background:#112338;box-shadow:0 0 0 1px #4da3ff}
+  .v.orig{border-style:dashed}
+  .rad{width:16px;height:16px;border-radius:50%;border:2px solid #3a5470;flex:none;margin-top:2px}
+  .v.sel .rad{border-color:#4da3ff;background:radial-gradient(#4da3ff 45%,transparent 50%)}
+  .v div.t{flex:1}
+  .cp{background:#1b2a3a;color:#c5d3e2;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:600}
+  .rc{display:inline-block;border:1px solid #2a4560;border-radius:99px;padding:3px 10px;margin:4px 4px 0 0;color:#b7c5d4;font-size:11px}
+  .rc.on{background:#16263a;border-color:#4da3ff;color:#fff}
+</style>
+
+<div class="split">
+<div class="mockup"><div class="mockup-header">Picking a suggestion</div><div class="mockup-body" style="padding:0"><div class="w">
+  <span class="chip must">Must fix</span><span class="chip blue">Bias &middot; Criteria 2.1</span>
+  <div style="color:#fff;font-weight:700;margin-top:8px">"Love" nudges members to say yes</div>
+  <div class="lbl" style="margin-top:12px">Which version is better?</div>
+  <div class="v orig"><i class="rad"></i><div class="t"><div class="lbl">Your original</div><div style="color:#dbe6f3;margin-top:2px">How much did you love the soft fabric?</div></div></div>
+  <div class="v sel"><i class="rad"></i><div class="t"><div class="lbl" style="color:#7fbcff">Neutral</div><div style="color:#fff;margin-top:2px">How would you rate the softness of the fabric?</div></div><span class="cp">Copy</span></div>
+  <div class="v"><i class="rad"></i><div class="t"><div class="lbl">Shorter</div><div style="color:#dbe6f3;margin-top:2px">Rate the fabric's softness.</div></div><span class="cp">Copy</span></div>
+  <div class="v"><i class="rad"></i><div class="t"><div class="lbl">Friendlier</div><div style="color:#dbe6f3;margin-top:2px">How soft did the fabric feel to you?</div></div><span class="cp">Copy</span></div>
+  <div style="color:#7f92a6;margin-top:10px">Phone now previews "Neutral". Re-check will confirm it made it into RedJade.</div>
+</div></div></div>
+
+<div class="mockup"><div class="mockup-header">Keeping the original (one optional tap for why)</div><div class="mockup-body" style="padding:0"><div class="w">
+  <span class="chip must">Must fix</span><span class="chip blue">Survey design &middot; Criteria 4.3</span>
+  <div style="color:#fff;font-weight:700;margin-top:8px">Q11 grid is hard to use on small phones</div>
+  <div class="lbl" style="margin-top:12px">Which version is better?</div>
+  <div class="v orig sel"><i class="rad"></i><div class="t"><div class="lbl" style="color:#7fbcff">Your original</div><div style="color:#fff;margin-top:2px">5-row rating grid (Comfort, Fit, Waistband, Softness, Durability)</div></div></div>
+  <div class="v"><i class="rad"></i><div class="t"><div class="lbl">Split into 5 questions</div><div style="color:#dbe6f3;margin-top:2px">One rating per screen, same scale</div></div><span class="cp">Copy</span></div>
+  <div class="lbl" style="margin-top:12px">Why keep it? (optional)</div>
+  <span class="rc on">Needed for comparability</span><span class="rc">Suggestion changes meaning</span><span class="rc">Required wording</span><span class="rc">Other...</span>
+  <div style="color:#7f92a6;margin-top:10px">Shows in the sign-off packet as "kept on purpose". Doesn't block Ready.</div>
+</div></div></div>
+</div>
