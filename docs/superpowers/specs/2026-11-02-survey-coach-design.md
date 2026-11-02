@@ -121,11 +121,20 @@ RedJade content read). Each version has one **Review** per rubric version.
 - First run: empty state offers **Try a sample survey** (bundled fixture), so the first
   critique a researcher sees is not of their own work.
 - Pasting a URL that already exists opens that survey and starts a re-check.
+- Pasting a new URL asks one quick question while reading starts: **"Is this a new
+  survey or a new version of one you've checked?"** (RedJade copies and new test links
+  get new URLs, and versions must still line up.)
+- **Survey type** (IHUT, Non-IHUT Product, Services / Concept, Market Research) drives
+  length targets and image rules. The AI proposes a type from the intro, and the
+  researcher confirms or changes it with one tap. The type is set in the admin portal
+  today, not in RedJade, so it can't be read reliably.
 
 ### 7.2 Reading moment
 
-- Phone on the left fills with questions as they are read. Steps on the right:
-  "Reading Q9", "Checking against 24 MMC guidelines", "Previewing on 3 phones".
+- The phone on the left fills with the **real captured pages** as they're read. Steps on
+  the right: "Reading screen 9", "Checking 46 rubric criteria", "Previewing on 3 phones".
+- Deterministic findings appear within seconds of capture finishing; AI findings stream
+  in after (performance budget in section 8.5).
 - Streams over Server-Sent Events. Respects `prefers-reduced-motion`.
 - Partial failure shows what was read and what wasn't (section 10).
 
@@ -145,12 +154,13 @@ plain-language label. Keyboard: up/down to move, Enter to focus coach.
 
 - Renders the selected screen as a member sees it. Numbered pins mark each finding.
 - Toggles: **Current / With fixes**, device (**iPhone SE / iPhone 16 / Android XL**),
-  **Large text**, **Dark mode**.
+  **Large text**, and **Dark mode** (only if the spike shows RedJade supports dark mode).
 - **Play as a member**: auto-advances through the survey at estimated member pace.
   A timeline under the phone shows elapsed time and fatigue zones (Fresh, Fatigue
   builds, High), and marks screen-out points with timestamps. Labeled as an estimate.
-- The preview is a faithful approximation of RedJade's mobile rendering, not a
-  pixel-perfect clone. The UI says so once, unobtrusively.
+- The phone shows a **replica** of RedJade's captured page (sandboxed, scripts removed),
+  verified against a real screenshot, with automatic fallback to the screenshot when
+  the replica isn't faithful (reader design, section 7).
 
 **Coach panel (right).** For the selected finding:
 
@@ -239,23 +249,26 @@ read-only in the review workspace.
 
 ### 8.2 Survey readers
 
+Full design: **`2026-11-02-survey-reader-design.md`** (capture bundles, navigator,
+extractor chain, replica viewer, coverage, response safety). Summary:
+
 ```python
 class SurveyReader(Protocol):
-    def read(self, url: str, on_progress: ProgressFn) -> SurveySnapshot: ...
+    def read(self, url: str, on_progress: ProgressFn) -> ReadResult: ...
+    # ReadResult = SurveySnapshot + replica paths + CoverageReport
 ```
 
-- `CrawlReader` (v1): opens the public RedJade URL, extracts each screen's question
-  text, type, options, scale labels, images (downloaded), required flags, and a
-  screenshot; advances by choosing a valid answer; detects screen-out and end pages.
-  Records **path coverage** ("linear path, 15 screens, 1 screen-out detected").
-- `FixtureReader`: loads saved snapshots (sample survey, tests).
-- `ApiReader` (future): same output from the RedJade API. Selected by config.
-
-**SurveySnapshot** (canonical, reader-independent): survey title, intro, ordered
-screens, each with `id`, `position`, `kind` (intro, single_choice, multi_choice,
-scale, grid, open_text, image_choice, info, thank_you, screen_out), `text`, `options`,
-`grid_rows`, `images` (path, dimensions, bytes), `required`, plus `content_hash`
-computed over normalized content.
+- **Capture once, interpret many times.** A headless phone browser saves a capture
+  bundle per screen (screenshots, tagged markup, accessibility tree, geometry, assets).
+  Pure extractors turn bundles into the `SurveySnapshot`, the replica, and coverage.
+- `CaptureReader` (v1): capture plus the extractor chain (network definition, RedJade
+  adapter rules in YAML, generic accessible-form extractor, AI vision fallback).
+- `FixtureReader`: loads saved snapshots and bundles (sample survey, Survey Zoo, tests).
+- Future: the RedJade API becomes the **structure** source, merged by question ID;
+  appearance still comes from a capture.
+- The `SurveySnapshot` model (screens, nested questions, options, scales, media,
+  element IDs, confidence) is defined in the reader design, section 6. Its
+  `content_hash` uses canonical option order so randomization doesn't create versions.
 
 ### 8.3 Review pipeline
 
@@ -293,8 +306,12 @@ Friendlier). Rules:
   keyed to screen IDs and guideline IDs. Validated with Pydantic; one retry on
   invalid output, then the criterion is marked "couldn't check".
 - Low temperature. Results cached by `(content_hash, rubric_version, model)`.
-- Each finding carries: screen ID, guideline ID, severity, evidence quote,
-  explanation, member impact, suggestions.
+- Each finding carries: screen ID, question ID, element ID, guideline ID, severity,
+  evidence quote, explanation, member impact, suggestions.
+- Each suggestion is **element-addressable**: a list of `{element_id, new_text}`
+  patches (question text, option labels) plus a display string, so "With fixes" can
+  patch the replica. Structural suggestions (split a grid, move a screen) carry a
+  `structural` type and are described in the coach, not drawn on the phone.
 
 **Scoring.** Member Experience Score 0 to 100, defined by the rubric
 (`docs/rubric/mmc-survey-rubric-v2.md`): nine dimensions, each criterion worth fixed
@@ -339,16 +356,28 @@ class LlmProvider(Protocol):
 
 ### 8.5 Jobs and streaming
 
-A review is a background job. Progress events (`screen_read`, `check_started`,
-`check_done`, `review_ready`, `error`) stream to the browser over SSE. One job per
-survey at a time.
+A review is a background job. Progress events (`screen_captured`, `capture_done`,
+`check_started`, `check_done`, `review_ready`, `error`) stream to the browser over SSE.
+One job per survey at a time.
+
+**Performance budget** (15-screen survey, measured on the pilot machine):
+
+| Stage | Target |
+|---|---|
+| First real page on the phone | under 10 s |
+| Capture complete | under 60 s |
+| Deterministic findings and score shown | under 5 s after capture |
+| AI findings complete | under 90 s after capture (dimension-batched calls run in parallel) |
+
+If AI findings are slower, the review is usable as soon as deterministic findings
+appear; AI findings arrive progressively, and the score updates with a gentle animation.
 
 ### 8.6 Data model
 
 | Table | Key fields |
 |---|---|
 | Survey | id, url, title, researcher, status, launched_at, created_at |
-| Version | id, survey_id, number, content_hash, snapshot_json, reader, coverage, read_at |
+| Version | id, survey_id, number, content_hash, snapshot_json, bundle_path, reader, coverage_json, read_at |
 | Review | id, version_id, rubric_version, model, score, readiness, est_minutes, created_at |
 | Finding | id, review_id, screen_id, guideline_id, severity, evidence, explanation, member_impact, suggestions_json, fingerprint |
 | Choice | id, finding_id, picked (original, neutral, shorter, friendlier, custom), reason_code, reason_text, picked_at |
@@ -418,7 +447,10 @@ The researcher always sees something useful. Deterministic findings never wait o
 
 - Advisory only. The app never blocks or launches anything.
 - Survey definitions only. No member responses or PII are read or stored.
-- **The crawler must not submit real responses** (see Risks, section 12).
+- **The reader must not pollute RedJade data** (reader design, section 9).
+- Surveys often show **unreleased products and concepts**. They're treated as
+  confidential: stored only locally, sent only to the Walmart-approved LLM path, and
+  the sign-off packet is stamped "Confidential, internal use only".
 - Everything stays local in v1: SQLite file and images on the researcher's machine.
 - No credentials in the browser. LLM access happens server-side through Wibey.
 
@@ -426,10 +458,13 @@ The researcher always sees something useful. Deterministic findings never wait o
 
 | # | Item | Impact | Proposed resolution |
 |---|---|---|---|
-| R1 | **Crawling a live survey may record a fake response in RedJade**, polluting research data and quotas. | High | Spike first. Prefer RedJade's preview or test link. Never submit the final page. If neither works, mark crawl sessions as test responses or require a preview link. Confirm with the RedJade owner. |
+| R1 | **Crawling may pollute RedJade data**: per-page saves, quota use, single-use links. | High | Test or preview links required by default; live links refused (reader design, section 9). Spike confirms mechanics. |
 | R2 | Wibey headless image support for vision checks is unverified. | Medium | Spike first. Fallback: text-only image checks (size, dimensions, alt text) until the gateway is available. |
-| R3 | Crawler picks answers to advance, so it may follow one branch only. | Medium | Show coverage honestly. Prefer options that continue. Branching handled properly by the future API reader. |
-| R4 | Rubric v2 has open questions (length targets, B5/B6, 9.4, 9.5, voice). | Medium | Rubric is data; answers change the file, not the code. |
+| R3 | The navigator walks one qualifying path, so other branches may be unseen. | Medium | Backtracking past screen-outs, honest coverage report. Full branching comes from the future API structure source. |
+| R4 | Rubric thresholds in D6 and D7 may shift after the spike measures RedJade rendering (D-7). | Low | Rubric is data; changes go in the rubric and decision log. |
+| R6 | **Non-technical researchers can't install and run a local Python, Node, and Wibey app.** | High | Open question O-1 (section 16). |
+| R7 | Wibey CLI start-up per call may break the "about a minute" promise. | Medium | Batch AI checks by dimension, run calls in parallel, show deterministic findings first (8.5). Measured in spike R2. |
+| R8 | Automated access to RedJade may need vendor approval. | Medium | Open question in reader design, section 13. |
 | R5 | Researchers may distrust AI findings. | High | Evidence on every finding, consistent results, and a golden-set check (section 14) before rollout. |
 | Q1 | Who owns guidelines edits (admin role)? | Low | v1: anyone can edit, every edit versioned. Revisit when hosted. |
 | Q2 | Sign-off skip policy (for example "90+ and no must-fix skips director review"). | Business | Decision for Onder with Morgan and Sue. Product only enables it. |
@@ -437,7 +472,8 @@ The researcher always sees something useful. Deterministic findings never wait o
 
 ## 13. Future extension points
 
-- `ApiReader` replaces `CrawlReader` (config switch).
+- The RedJade API becomes the structure source (merged by question ID); captures keep
+  supplying appearance.
 - "Apply to RedJade" replaces Copy once a write API exists. No interface built now (YAGNI).
 - `GatewayProvider` replaces `WibeyProvider` when hosted on AI Launchpad, enabling
   share links, SSO, and live sign-off.
@@ -451,7 +487,9 @@ The researcher always sees something useful. Deterministic findings never wait o
   100, every dimension total matches its criteria, and IDs are unique.
 - **Judge:** schema validation, retry path, caching, injection resistance (survey text
   that contains instructions must not change behavior), all against `FakeProvider`.
-- **Reader:** `CrawlReader` against saved RedJade HTML served locally. One opt-in live smoke test.
+- **Reader:** Survey Zoo fixture site (every question kind, nesting, reveal logic,
+  screen-outs, piping, randomization, bad images) plus golden RedJade capture bundles.
+  Live smoke test is opt-in and uses test links only.
 - **API:** httpx tests per route, including SSE event order.
 - **E2E (Playwright), isolated per feature:** paste and read, review navigation,
   version choice and preview, copy, re-check diff, packet export, guidelines edit,
@@ -463,13 +501,25 @@ The researcher always sees something useful. Deterministic findings never wait o
 
 ## 15. Build order
 
-1. Spikes: R1 (crawl without polluting responses) and R2 (Wibey vision). Results may adjust section 8.
-2. Snapshot model, FixtureReader, sample survey, deterministic checks, scoring, timing.
-3. FastAPI, SQLite, jobs, SSE. Home and Reading moment.
-4. Review workspace: rail, phone (devices, toggles), coach with choices and copy.
-5. AI judge with WibeyProvider, caching, suggestions, Ask the coach.
-6. CrawlReader.
-7. Re-check and versions, then sign-off packet export.
-8. Guidelines library and glossary.
-9. Play as a member and polish (motion, empty states, a11y pass).
-10. v1.5: performance import and predicted vs. actual.
+The build is sequenced in `docs/superpowers/plans/2026-11-02-roadmap.md` (one
+detailed plan per stage), so the order lives in one place.
+
+## 16. Spec review: gaps found and resolved (2026-11-02)
+
+| # | Gap | Resolution |
+|---|---|---|
+| G-15 | The rubric needs the survey type, but RedJade doesn't hold it. | AI proposes, researcher confirms with one tap (7.1). |
+| G-16 | A new RedJade test link or survey copy gets a new URL, breaking version history. | "New survey or new version?" on paste (7.1). |
+| G-17 | The rubric existed only as a document; the app needs data, and the two could drift. | `docs/rubric/mmc-survey-rubric-v2.yaml` is the app's source of truth. A test asserts it matches the approved markdown (IDs, points, active flags). Guidelines edits create new rubric versions in the database. |
+| G-18 | "About a minute" had no budget behind it. | Section 8.5 budget. |
+| G-19 | Unreleased products in surveys are confidential. | Section 11. |
+| G-20 | Reader gaps (API vs. appearance, pollution, randomization, piping, reveal logic, screen-outs, CSS images, element-addressable fixes, replica fidelity and safety). | Reader design, section 13 (G-1 to G-14). |
+| G-21 | The golden set needs past surveys, but closed RedJade links may no longer open. | Open question O-2. |
+
+### Open questions for Onder
+
+| # | Question | Why it matters |
+|---|---|---|
+| O-1 | **Who runs v1, and where?** Options: (a) a pilot on Onder's machine with researchers alongside, then hosting on AI Launchpad with the WMT LLM gateway for self-serve; (b) host from the start, which moves the gateway provider and sign-in into v1. | Researchers can't install a local developer stack. This decides whether hosting is v1 or v1.1. |
+| O-2 | Can we get 20 to 30 past surveys as RedJade test links or exports, with senior-director grades? | Needed for the pre-rollout golden-set check (section 14). |
+| O-3 | RedJade test links, vendor approval, how the MMC app opens surveys, other languages. | Listed in the reader design, section 13. |
