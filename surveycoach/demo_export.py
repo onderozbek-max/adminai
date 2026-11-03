@@ -67,13 +67,12 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="surveycoach.demo_export")
     parser.add_argument("--ai-refresh", action="store_true", help="Re-run the real AI judge and replace the committed cache")
     args = parser.parse_args(argv)
-    provider = None
     if args.ai_refresh:
         for stale in AI_CACHE.glob("*.json"):    # old answers (and answers for old prompts) must not linger
             stale.unlink()
-        provider = WibeyProvider()
+        build_demo_data(WibeyProvider())     # fills the cache from the real model; the output itself is discarded
     SITE_DATA.parent.mkdir(exist_ok=True)
-    SITE_DATA.write_text(render_data_js(build_demo_data(provider)))
+    SITE_DATA.write_text(render_data_js(build_demo_data()))   # always written through the offline replay path
     print(f"wrote {SITE_DATA.relative_to(ROOT)}")
 
 

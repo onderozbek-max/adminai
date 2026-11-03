@@ -955,7 +955,11 @@ window.SURVEYCOACH_DEMO = {
      ],
      "failed": {},
      "dropped": [],
-     "from_cache": []
+     "from_cache": [
+      "wording",
+      "story",
+      "flow"
+     ]
     }
    },
    "timeline": [
@@ -1420,7 +1424,11 @@ window.SURVEYCOACH_DEMO = {
      ],
      "failed": {},
      "dropped": [],
-     "from_cache": []
+     "from_cache": [
+      "wording",
+      "story",
+      "flow"
+     ]
     }
    },
    "timeline": [
