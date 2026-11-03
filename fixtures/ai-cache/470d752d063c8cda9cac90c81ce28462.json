@@ -1,0 +1,193 @@
+{
+ "verdicts": [
+  {
+   "criterion_id": "1.1",
+   "fraction": 0.5
+  },
+  {
+   "criterion_id": "1.2",
+   "fraction": 0.25
+  },
+  {
+   "criterion_id": "1.3",
+   "fraction": 0.0
+  },
+  {
+   "criterion_id": "9.1",
+   "fraction": 0.5
+  },
+  {
+   "criterion_id": "10.1",
+   "fraction": 0.0
+  },
+  {
+   "criterion_id": "10.3",
+   "fraction": 0.0
+  }
+ ],
+ "blockers": [],
+ "findings": [
+  {
+   "criterion_id": "1.1",
+   "page_id": null,
+   "question_id": "",
+   "severity": "worth_improving",
+   "headline": "The title reads like a form label, not an invitation",
+   "evidence": "Member's Mark Boxer Briefs Feedback Survey",
+   "explanation": "The title identifies the product, but uses title case and a generic feedback-survey label. Use sentence case, keeping Member's Mark capitalized, and invite members to share their experience.",
+   "member_impact": "A clear, inviting title helps members understand the topic and feel welcome before they begin.",
+   "current_text": "Member's Mark Boxer Briefs Feedback Survey",
+   "suggested_text": "Share your thoughts on Member's Mark boxer briefs",
+   "highlight": "Boxer Briefs Feedback Survey",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Share your thoughts on Member's Mark boxer briefs"
+    },
+    {
+     "label": "Shorter",
+     "text": "Your Member's Mark boxer briefs experience"
+    },
+    {
+     "label": "Friendlier",
+     "text": "Let's talk about your Member's Mark boxer briefs"
+    }
+   ]
+  },
+  {
+   "criterion_id": "1.2",
+   "page_id": "p0",
+   "question_id": "",
+   "severity": "worth_improving",
+   "headline": "The welcome does not explain what you want to learn or why members were invited",
+   "evidence": "Welcome to the Boxer Briefs Survey!",
+   "explanation": "The welcome names the product but does not describe the focus or explain the invitation. Add what you want to learn and the actual reason these members were selected. Confirm the selection basis before publishing; do not imply a verified purchase unless that is known.",
+   "member_impact": "Members cannot tell why their experience is relevant or what kind of feedback you need.",
+   "current_text": "Welcome to the Boxer Briefs Survey!",
+   "suggested_text": "We want to learn how Member's Mark boxer briefs fit, feel and hold up. We're inviting you as a Member's Mark Community member to share your experience.",
+   "highlight": "Welcome to the Boxer Briefs Survey!",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "We want to learn how Member's Mark boxer briefs fit, feel and hold up. We're inviting you as a Member's Mark Community member to share your experience."
+    },
+    {
+     "label": "Shorter",
+     "text": "As a Member's Mark Community member, you're invited to share how our boxer briefs fit, feel and hold up."
+    },
+    {
+     "label": "Friendlier",
+     "text": "How are your Member's Mark boxer briefs working for you? As part of our Community, we'd love your take on their fit, comfort and durability."
+    }
+   ]
+  },
+  {
+   "criterion_id": "1.3",
+   "page_id": "p0",
+   "question_id": "",
+   "severity": "worth_improving",
+   "headline": "Members are asked to complete a survey, not help shape the product",
+   "evidence": "Welcome to the Boxer Briefs Survey!",
+   "explanation": "Add a clear invitation to help improve the product. Frame members as partners whose everyday experience can guide improvements, without promising that every suggestion will be adopted. This can be combined with the introduction rewrite.",
+   "member_impact": "Members may feel like respondents filling out a form rather than partners contributing useful ideas.",
+   "current_text": "Welcome to the Boxer Briefs Survey!",
+   "suggested_text": "Help us improve Member's Mark boxer briefs by sharing what works for you and what you would change.",
+   "highlight": "Welcome to the Boxer Briefs Survey!",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Help us improve Member's Mark boxer briefs by sharing what works for you and what you would change."
+    },
+    {
+     "label": "Shorter",
+     "text": "Help shape better Member's Mark boxer briefs with your feedback."
+    },
+    {
+     "label": "Friendlier",
+     "text": "Let's make Member's Mark boxer briefs better together. Tell us what you love and what could work better."
+    }
+   ]
+  },
+  {
+   "criterion_id": "9.1",
+   "page_id": "p12",
+   "question_id": "",
+   "severity": "worth_improving",
+   "headline": "The final message sounds like a system status",
+   "evidence": "Survey complete.",
+   "explanation": "Replace the impersonal status message with a direct, human acknowledgment. Keep this conversational improvement alongside the separate additions for gratitude and how feedback will be used.",
+   "member_impact": "After sharing personal opinions, members reach an abrupt ending that feels automated rather than conversational.",
+   "current_text": "Survey complete.",
+   "suggested_text": "You've reached the end. We're glad you shared your experience with us.",
+   "highlight": "Survey complete.",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "You've reached the end. We're glad you shared your experience with us."
+    },
+    {
+     "label": "Shorter",
+     "text": "You're all done. We're glad to hear from you."
+    },
+    {
+     "label": "Friendlier",
+     "text": "That's everything! It's been good to hear about your experience."
+    }
+   ]
+  },
+  {
+   "criterion_id": "10.1",
+   "page_id": "p12",
+   "question_id": "",
+   "severity": "worth_improving",
+   "headline": "The ending never thanks members for their time",
+   "evidence": "Survey complete.",
+   "explanation": "Add an explicit thank-you that recognizes the time and product experience members contributed, rather than only confirming completion.",
+   "member_impact": "Members receive no acknowledgment of the effort they put into answering, including the written responses.",
+   "current_text": "Survey complete.",
+   "suggested_text": "Thank you for taking the time to share your experience with Member's Mark boxer briefs.",
+   "highlight": "Survey complete.",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Thank you for taking the time to share your experience with Member's Mark boxer briefs."
+    },
+    {
+     "label": "Shorter",
+     "text": "Thank you for your time and feedback."
+    },
+    {
+     "label": "Friendlier",
+     "text": "Thanks for sharing your experience with us! We appreciate the time and thought you put into your answers."
+    }
+   ]
+  },
+  {
+   "criterion_id": "10.3",
+   "page_id": "p12",
+   "question_id": "",
+   "severity": "worth_improving",
+   "headline": "Members are not told what happens with their answers",
+   "evidence": "Survey complete.",
+   "explanation": "Add a concrete, accurate account of how feedback will inform product decisions. Confirm the intended use with the research team before publishing. Do not promise changes or a follow-up unless those are planned. Combine this sentence with the thank-you and warmer closing.",
+   "member_impact": "Members leave without knowing whether their answers will be useful or how their participation can make a difference.",
+   "current_text": "Survey complete.",
+   "suggested_text": "Your feedback will help us understand what works well and where Member's Mark boxer briefs could improve.",
+   "highlight": "Survey complete.",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Your feedback will help us understand what works well and where Member's Mark boxer briefs could improve."
+    },
+    {
+     "label": "Shorter",
+     "text": "Your answers will help identify improvements to Member's Mark boxer briefs."
+    },
+    {
+     "label": "Friendlier",
+     "text": "What you've shared will help us see what's working and what could make Member's Mark boxer briefs better for members like you."
+    }
+   ]
+  }
+ ]
+}

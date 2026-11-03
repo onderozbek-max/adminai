@@ -88,11 +88,15 @@ def _ground_one(raw: AiFinding, batch: Batch, raised: set[str], snapshot: Survey
     if _norm(raw.evidence) not in _norm(located):
         return None, f"{cid}: the quote was not found in the survey: {clip(raw.evidence, 60)}"
     current, suggested, options, highlight = _rewrite(raw, located)
+    # Computed here, never taken from the model: a one-line 'before' with a multi-line 'after' is a bundle (question plus
+    # answer choices), which must not be swapped into one text element of the phone preview.
+    rewrites = [t for t in (suggested, *[o.text for o in options]) if t]
+    structural = bool(current and "\n" not in current and any("\n" in t for t in rewrites))
     return Finding(
         criterion_id=cid, severity="must_fix" if cid in batch.blockers else "worth_improving", headline=raw.headline,
         evidence=raw.evidence, explanation=raw.explanation, member_impact=raw.member_impact, page_id=page_id,
         question_id=raw.question_id, current_text=current, suggested_text=suggested, highlight=highlight,
-        options=options, source="ai"), ""
+        options=options, structural=structural, source="ai"), ""
 
 
 def ground(output: BatchOutput, batch: Batch, snapshot: SurveySnapshot, rubric: Rubric) -> Grounded:

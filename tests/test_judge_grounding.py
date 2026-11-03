@@ -2,7 +2,7 @@
 from surveycoach.judge.batches import WORDING
 from surveycoach.judge.grounding import ground
 from surveycoach.judge.schemas import AiFinding, BatchOutput, BlockerCall, Verdict
-from surveycoach.findings import RewriteOption
+from surveycoach.findings import Finding, RewriteOption
 from surveycoach.rubric import load_rubric
 from tests.builders import intro, page, question, survey, thank_you
 
@@ -161,3 +161,19 @@ def test_the_survey_title_is_quotable_for_the_title_criterion_even_when_a_page_i
 def test_the_title_is_not_a_loophole_for_other_criteria():
     title = snapshot().title
     assert run(output([finding(evidence=title)])).results["5.1"].findings == []
+
+
+def test_a_rewrite_that_bundles_answer_choices_is_structural_so_it_is_never_swapped_into_the_question_text():
+    bundle = [RewriteOption(label="Neutral", text=f"{LOUD}\nA lot\nA little\nNone of these")]
+    kept = the_finding(run(output([finding(current_text=LOUD, options=bundle)])))
+    assert kept.structural is True and kept.options[0].text.count("\n") == 3      # still copyable, just not previewed
+
+
+def test_a_single_line_rewrite_is_a_plain_text_swap():
+    kept = the_finding(run(output([finding(current_text=LOUD, suggested_text="How soft was it?")])))
+    assert kept.structural is False
+
+
+def test_findings_default_to_not_structural():
+    assert Finding(criterion_id="5.1", severity="worth_improving", headline="h", evidence="e", explanation="x",
+                   member_impact="m").structural is False

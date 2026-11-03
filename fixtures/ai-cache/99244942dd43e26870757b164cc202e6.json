@@ -1,0 +1,51 @@
+{
+ "verdicts": [
+  {
+   "criterion_id": "3.1",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "3.4",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "3.5",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "4.1",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "4.3",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "5.1",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "5.2",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "5.3",
+   "fraction": 1.0
+  }
+ ],
+ "blockers": [
+  {
+   "blocker_id": "B1",
+   "triggered": false
+  },
+  {
+   "blocker_id": "B2",
+   "triggered": false
+  },
+  {
+   "blocker_id": "B6",
+   "triggered": false
+  }
+ ],
+ "findings": []
+}

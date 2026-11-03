@@ -1,0 +1,30 @@
+{
+ "verdicts": [
+  {
+   "criterion_id": "1.1",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "1.2",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "1.3",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "9.1",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "10.1",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "10.3",
+   "fraction": 1.0
+  }
+ ],
+ "blockers": [],
+ "findings": []
+}

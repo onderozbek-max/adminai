@@ -1,0 +1,282 @@
+{
+ "verdicts": [
+  {
+   "criterion_id": "3.1",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "3.4",
+   "fraction": 0.9
+  },
+  {
+   "criterion_id": "3.5",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "4.1",
+   "fraction": 0.25
+  },
+  {
+   "criterion_id": "4.3",
+   "fraction": 0.5
+  },
+  {
+   "criterion_id": "5.1",
+   "fraction": 0.5
+  },
+  {
+   "criterion_id": "5.2",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "5.3",
+   "fraction": 1.0
+  }
+ ],
+ "blockers": [
+  {
+   "blocker_id": "B1",
+   "triggered": true
+  },
+  {
+   "blocker_id": "B2",
+   "triggered": true
+  },
+  {
+   "blocker_id": "B6",
+   "triggered": false
+  }
+ ],
+ "findings": [
+  {
+   "criterion_id": "3.4",
+   "page_id": "p10",
+   "question_id": "q10",
+   "severity": "worth_improving",
+   "headline": "An instruction ends with a question mark",
+   "evidence": "Tell us what else you would like to share?",
+   "explanation": "Use a period for this instruction, or rewrite it as a direct question. This finding concerns punctuation only.",
+   "member_impact": "The punctuation makes the sentence read awkwardly.",
+   "current_text": "Tell us what else you would like to share?",
+   "suggested_text": "Tell us what else you would like to share.",
+   "highlight": "?",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Tell us what else you would like to share."
+    },
+    {
+     "label": "Shorter",
+     "text": "What else would you like to share?"
+    },
+    {
+     "label": "Friendlier",
+     "text": "Is there anything else you'd like to share with us?"
+    }
+   ]
+  },
+  {
+   "criterion_id": "4.1",
+   "page_id": "p1",
+   "question_id": "q1",
+   "severity": "worth_improving",
+   "headline": "The purchase choices assume everyone bought one listed pack",
+   "evidence": "Which Member's Mark Boxer Briefs did you buy?",
+   "explanation": "No purchase screening is shown. Add choices for another pack, no purchase and not remembering. Route nonbuyers away from ownership and use questions. Allow multiple packs if members can have bought more than one.",
+   "member_impact": "Members who did not buy a listed pack must choose an inaccurate answer to continue.",
+   "current_text": "Which Member's Mark Boxer Briefs did you buy?",
+   "suggested_text": "Which Member's Mark boxer briefs have you bought? Select all that apply.\nNavy 3-pack\nBlack 3-pack\nGrey 6-pack\nAnother pack\nI haven't bought Member's Mark boxer briefs\nI don't remember",
+   "highlight": "did you buy",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Which Member's Mark boxer briefs have you bought? Select all that apply.\nNavy 3-pack\nBlack 3-pack\nGrey 6-pack\nAnother pack\nI haven't bought Member's Mark boxer briefs\nI don't remember"
+    },
+    {
+     "label": "Shorter",
+     "text": "Which Member's Mark packs have you bought? Select all that apply.\nNavy 3-pack\nBlack 3-pack\nGrey 6-pack\nAnother pack\nNone\nDon't remember"
+    },
+    {
+     "label": "Friendlier",
+     "text": "Which Member's Mark boxer briefs have you picked up? Choose all that apply.\nNavy 3-pack\nBlack 3-pack\nGrey 6-pack\nAnother pack\nI haven't bought any\nI don't remember"
+    }
+   ]
+  },
+  {
+   "criterion_id": "4.1",
+   "page_id": "p3",
+   "question_id": "q3",
+   "severity": "worth_improving",
+   "headline": "The agreement rows contain no statements to judge",
+   "evidence": "Statement 1",
+   "explanation": "All seven rows in this question are numbered placeholders rather than statements about the boxer briefs. Replace each with a complete, neutral statement about a specific product feature before launch.",
+   "member_impact": "Members cannot meaningfully agree or disagree because they are not told what each row means.",
+   "current_text": "Statement 1",
+   "suggested_text": null,
+   "highlight": "Statement 1",
+   "options": []
+  },
+  {
+   "criterion_id": "4.1",
+   "page_id": "p5",
+   "question_id": "q5",
+   "severity": "worth_improving",
+   "headline": "Other in-store shoppers have no answer",
+   "evidence": "Where do you usually shop for underwear?",
+   "explanation": "The only choices are Sam's Club, Walmart, Target and Online. Add another-store and do-not-shop choices so members who shop elsewhere in person or do not shop for underwear can answer honestly.",
+   "member_impact": "A member who shops at another physical store cannot select a truthful answer.",
+   "current_text": "Where do you usually shop for underwear?",
+   "suggested_text": "Where do you usually shop for underwear?\nSam's Club\nWalmart\nTarget\nOnline\nAnother physical store\nI don't shop for underwear",
+   "highlight": null,
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Where do you usually shop for underwear?\nSam's Club\nWalmart\nTarget\nOnline\nAnother physical store\nI don't shop for underwear"
+    },
+    {
+     "label": "Shorter",
+     "text": "Where do you usually buy underwear?\nSam's Club\nWalmart\nTarget\nOnline\nAnother physical store\nI don't buy underwear"
+    },
+    {
+     "label": "Friendlier",
+     "text": "Where do you usually go to shop for underwear?\nSam's Club\nWalmart\nTarget\nOnline\nAnother physical store\nI don't shop for underwear"
+    }
+   ]
+  },
+  {
+   "criterion_id": "4.3",
+   "page_id": "p6",
+   "question_id": "q6",
+   "severity": "worth_improving",
+   "headline": "Members cannot say none of the listed features matter",
+   "evidence": "Which of these matter to you?",
+   "explanation": "Add an exclusive 'None of these' choice. A required selection should not force members to claim that one of the nine listed features matters to them.",
+   "member_impact": "Members whose priorities are not listed must select a feature they do not care about.",
+   "current_text": "Which of these matter to you?",
+   "suggested_text": "Which of these matter to you?\nFit\nComfort\nPrice\nFabric\nWaistband\nDurability\nColor\nPack size\nBrand\nNone of these",
+   "highlight": null,
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Which of these matter to you?\nFit\nComfort\nPrice\nFabric\nWaistband\nDurability\nColor\nPack size\nBrand\nNone of these"
+    },
+    {
+     "label": "Shorter",
+     "text": "Which features matter to you?\nFit\nComfort\nPrice\nFabric\nWaistband\nDurability\nColor\nPack size\nBrand\nNone of these"
+    },
+    {
+     "label": "Friendlier",
+     "text": "What matters to you when choosing underwear?\nFit\nComfort\nPrice\nFabric\nWaistband\nDurability\nColor\nPack size\nBrand\nNone of these"
+    }
+   ]
+  },
+  {
+   "criterion_id": "4.3",
+   "page_id": "p7",
+   "question_id": "q7",
+   "severity": "worth_improving",
+   "headline": "Members must pick a style even without a preference",
+   "evidence": "Click the one you like best.",
+   "explanation": "Add 'No preference' and 'None of these' choices. This is about the missing answer choices, independent of how the styles are displayed.",
+   "member_impact": "Members who like the styles equally or dislike all three must invent a favorite.",
+   "current_text": "Click the one you like best.",
+   "suggested_text": "Which style do you prefer?\nClassic\nAthletic\nRelaxed\nNo preference\nNone of these",
+   "highlight": "the one you like best",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Which style do you prefer?\nClassic\nAthletic\nRelaxed\nNo preference\nNone of these"
+    },
+    {
+     "label": "Shorter",
+     "text": "Your preferred style?\nClassic\nAthletic\nRelaxed\nNo preference\nNone of these"
+    },
+    {
+     "label": "Friendlier",
+     "text": "Which style would you choose? It's fine if you don't have a favorite.\nClassic\nAthletic\nRelaxed\nNo preference\nNone of these"
+    }
+   ]
+  },
+  {
+   "criterion_id": "5.1",
+   "page_id": "p4",
+   "question_id": "q4",
+   "severity": "worth_improving",
+   "headline": "The fit question assumes a positive reaction",
+   "evidence": "How much did you LOVE the fit? 🩲",
+   "explanation": "Ask for a neutral fit rating and offer equally clear positive and negative answers. The issue is the assumption that members loved the fit, not the capitalization or emoji.",
+   "member_impact": "Members who disliked the fit must translate their experience into an amount of love, which can push feedback toward positive answers.",
+   "current_text": "How much did you LOVE the fit? 🩲",
+   "suggested_text": "How satisfied or dissatisfied are you with the fit of these boxer briefs?\nVery dissatisfied\nSomewhat dissatisfied\nNeither satisfied nor dissatisfied\nSomewhat satisfied\nVery satisfied\nI haven't worn them",
+   "highlight": "LOVE",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "How satisfied or dissatisfied are you with the fit of these boxer briefs?\nVery dissatisfied\nSomewhat dissatisfied\nNeither satisfied nor dissatisfied\nSomewhat satisfied\nVery satisfied\nI haven't worn them"
+    },
+    {
+     "label": "Shorter",
+     "text": "How would you rate the fit?\nVery poor\nPoor\nNeither good nor poor\nGood\nVery good\nI haven't worn them"
+    },
+    {
+     "label": "Friendlier",
+     "text": "How did the fit work for you?\nVery poorly\nSomewhat poorly\nNeither well nor poorly\nSomewhat well\nVery well\nI haven't worn them"
+    }
+   ]
+  },
+  {
+   "criterion_id": "B1",
+   "page_id": "p4",
+   "question_id": "q4",
+   "severity": "must_fix",
+   "headline": "A main product rating steers members toward praise",
+   "evidence": "How much did you LOVE the fit? 🩲",
+   "explanation": "Fit is a central topic in a boxer briefs feedback survey. Remove the assumption of love and replace the answer choices with a balanced negative-to-positive fit scale before launch.",
+   "member_impact": "The wording can distort a core product result by making positive feelings the assumed starting point.",
+   "current_text": "How much did you LOVE the fit? 🩲",
+   "suggested_text": "How satisfied or dissatisfied are you with the fit of these boxer briefs?\nVery dissatisfied\nSomewhat dissatisfied\nNeither satisfied nor dissatisfied\nSomewhat satisfied\nVery satisfied\nI haven't worn them",
+   "highlight": "LOVE",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "How satisfied or dissatisfied are you with the fit of these boxer briefs?\nVery dissatisfied\nSomewhat dissatisfied\nNeither satisfied nor dissatisfied\nSomewhat satisfied\nVery satisfied\nI haven't worn them"
+    },
+    {
+     "label": "Shorter",
+     "text": "How would you rate the fit?\nVery poor\nPoor\nNeither good nor poor\nGood\nVery good\nI haven't worn them"
+    },
+    {
+     "label": "Friendlier",
+     "text": "How did the fit work for you?\nVery poorly\nSomewhat poorly\nNeither well nor poorly\nSomewhat well\nVery well\nI haven't worn them"
+    }
+   ]
+  },
+  {
+   "criterion_id": "B2",
+   "page_id": "p5",
+   "question_id": "q5",
+   "severity": "must_fix",
+   "headline": "A required shopping question excludes other physical stores",
+   "evidence": "Where do you usually shop for underwear?",
+   "explanation": "A member who usually shops in person somewhere other than Sam's Club, Walmart or Target has no valid choice. Add 'Another physical store' and 'I don't shop for underwear' before launch. Also resolve the unanswerable placeholder rows in q3 and purchase coverage in q1.",
+   "member_impact": "Some members cannot finish the required question without giving false information.",
+   "current_text": "Where do you usually shop for underwear?",
+   "suggested_text": "Where do you usually shop for underwear?\nSam's Club\nWalmart\nTarget\nOnline\nAnother physical store\nI don't shop for underwear",
+   "highlight": null,
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Where do you usually shop for underwear?\nSam's Club\nWalmart\nTarget\nOnline\nAnother physical store\nI don't shop for underwear"
+    },
+    {
+     "label": "Shorter",
+     "text": "Where do you usually buy underwear?\nSam's Club\nWalmart\nTarget\nOnline\nAnother physical store\nI don't buy underwear"
+    },
+    {
+     "label": "Friendlier",
+     "text": "Where do you usually go to shop for underwear?\nSam's Club\nWalmart\nTarget\nOnline\nAnother physical store\nI don't shop for underwear"
+    }
+   ]
+  }
+ ]
+}

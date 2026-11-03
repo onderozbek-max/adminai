@@ -1,0 +1,100 @@
+{
+ "verdicts": [
+  {
+   "criterion_id": "2.3",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "2.5",
+   "fraction": 0.5
+  },
+  {
+   "criterion_id": "8.1",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "8.3",
+   "fraction": 0.0
+  },
+  {
+   "criterion_id": "8.4",
+   "fraction": 0.5
+  },
+  {
+   "criterion_id": "8.5",
+   "fraction": 0.5
+  }
+ ],
+ "blockers": [],
+ "findings": [
+  {
+   "criterion_id": "2.5",
+   "page_id": "p5",
+   "question_id": "q5",
+   "severity": "worth_improving",
+   "headline": "Shopping habits interrupt the product feedback",
+   "evidence": "Where do you usually shop for underwear?",
+   "explanation": "Move q5 after the product experience and preference questions. Keep feedback about the purchased briefs together before switching to broader shopping habits.",
+   "member_impact": "Members switch from judging the fit to recalling shopping habits, then back to product preferences, making the sequence feel less connected.",
+   "current_text": null,
+   "suggested_text": null,
+   "highlight": null,
+   "options": []
+  },
+  {
+   "criterion_id": "8.3",
+   "page_id": "p0",
+   "question_id": "",
+   "severity": "worth_improving",
+   "headline": "Members never hear how their feedback will help",
+   "evidence": "Welcome to the Boxer Briefs Survey!",
+   "explanation": "Add a brief explanation of how members' experience will inform the team's understanding of the product. Carry that purpose into the closing thank-you. Do not promise a product change unless it is planned. These rewrites replace only the welcome sentence, not the timing or reward information already flagged.",
+   "member_impact": "The survey feels like a routine questionnaire rather than a chance to contribute as part of the Member's Mark Community.",
+   "current_text": "Welcome to the Boxer Briefs Survey!",
+   "suggested_text": "As part of the Member's Mark Community, your experience can help our team understand what works and what could be better about these boxer briefs.",
+   "highlight": "Welcome to the Boxer Briefs Survey!",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "As part of the Member's Mark Community, your experience can help our team understand what works and what could be better about these boxer briefs."
+    },
+    {
+     "label": "Shorter",
+     "text": "Help the Member's Mark team understand what works and what could be better about these boxer briefs."
+    },
+    {
+     "label": "Friendlier",
+     "text": "You've tried these boxer briefs. Now share your experience with the Member's Mark team so we can learn what works for you and what could be better."
+    }
+   ]
+  },
+  {
+   "criterion_id": "8.4",
+   "page_id": "p3",
+   "question_id": "q3",
+   "severity": "worth_improving",
+   "headline": "Placeholder statements give members nothing relevant to rate",
+   "evidence": "Statement 1",
+   "explanation": "All seven rows use numbered placeholders instead of statements about the boxer briefs. Replace them with actual product attributes tied to the research goal, or remove the question until those statements are ready. This concerns the missing content, not the grid size already flagged.",
+   "member_impact": "Members cannot connect agreement ratings to their experience when the statements contain no product information.",
+   "current_text": null,
+   "suggested_text": null,
+   "highlight": "Statement 1",
+   "options": []
+  },
+  {
+   "criterion_id": "8.5",
+   "page_id": "p8",
+   "question_id": "q8",
+   "severity": "worth_improving",
+   "headline": "Three writing prompts are stacked near the finish",
+   "evidence": "Why did you choose them?",
+   "explanation": "Three consecutive questions, q8, q9 and q10, ask members to compose written answers late in the survey. Keep q8 beside q7, but move the quick recommendation rating between q8 and q9 to break up the writing stretch. This addresses the sequence, not q10's required status already flagged.",
+   "member_impact": "Repeated typing on a phone makes the final stretch feel heavier and can lead to rushed answers before the recommendation rating.",
+   "current_text": null,
+   "suggested_text": null,
+   "highlight": null,
+   "options": []
+  }
+ ]
+}

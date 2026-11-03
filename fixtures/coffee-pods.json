@@ -6,7 +6,7 @@
       "id": "p0",
       "position": 0,
       "kind": "intro",
-      "intro_text": "Thanks for helping shape Member's Mark! This takes about 2 minutes and you'll earn points."
+      "intro_text": "Thanks for helping shape Member's Mark! You're part of our Community, so your pick helps choose our next coffee pod flavor. This takes about 2 minutes and you'll earn points."
     },
     {
       "id": "p1",
@@ -53,6 +53,11 @@
                 "rendered_h": 170,
                 "bytes": 90000
               }
+            },
+            {
+              "id": "q1-o3",
+              "label": "I wouldn't try any of these",
+              "is_exclusive": true
             }
           ]
         }
@@ -69,16 +74,24 @@
           "kind": "single_choice",
           "options": [
             {
-              "id": "q2-0",
+              "id": "q2-o0",
               "label": "Every day"
             },
             {
-              "id": "q2-1",
+              "id": "q2-o1",
               "label": "A few times a week"
             },
             {
-              "id": "q2-2",
-              "label": "Rarely"
+              "id": "q2-o2",
+              "label": "About once a week"
+            },
+            {
+              "id": "q2-o3",
+              "label": "Less than once a week"
+            },
+            {
+              "id": "q2-o4",
+              "label": "Never"
             }
           ]
         }
@@ -105,6 +118,11 @@
             {
               "id": "q3-2",
               "label": "Ground"
+            },
+            {
+              "id": "q3-o3",
+              "label": "None of these",
+              "is_exclusive": true
             }
           ]
         }
