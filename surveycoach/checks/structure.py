@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import re
 
-from surveycoach.checks.registry import ReviewContext, blocker_ok, check, finding, passed, result
+from surveycoach.checks.registry import (ReviewContext, blocker_ok, check, finding, not_applicable, passed,
+                                         result)
 from surveycoach.findings import CheckResult
 from surveycoach.snapshot import Page
 
@@ -103,6 +104,8 @@ def length_fits_type(ctx: ReviewContext) -> CheckResult:
 
 @check("2.2")
 def screeners_first(ctx: ReviewContext) -> CheckResult:
+    if not _screen_out_pages(ctx):
+        return not_applicable("2.2")   # no screen-out was observed, so there is nothing to place
     late = []
     for index, page in _screen_out_pages(ctx):
         answered = sum(len(p.questions) for p in ctx.snapshot.pages[:index])

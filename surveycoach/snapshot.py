@@ -28,6 +28,7 @@ class Media(BaseModel):
     bytes: int | None = None
     format: str | None = None
     has_alpha: bool = False
+    object_fit: str | None = None   # cover/contain mean a deliberate crop, not a stretch
     loaded: bool = True
     asset_path: str | None = None
 
@@ -70,6 +71,7 @@ class Page(BaseModel):
     intro_text: str = ""
     questions: list[Question] = Field(default_factory=list)
     links_out: list[str] = Field(default_factory=list)
+    media: list[Media] = Field(default_factory=list)
     text: str = ""
 
 

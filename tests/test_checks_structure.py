@@ -132,3 +132,7 @@ def test_8_6_wants_an_optional_open_comment_near_the_end():
     assert run(structure.room_to_speak, one_question_survey(question())).fraction == 0.0
     required = closing.model_copy(update={"required": True})
     assert run(structure.room_to_speak, survey(intro(), page(1, required), thank_you())).fraction == 0.0
+
+
+def test_2_2_is_not_applicable_when_no_screen_out_was_seen():
+    assert run(structure.screeners_first, one_question_survey(question())).applies is False

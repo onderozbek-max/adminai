@@ -33,8 +33,11 @@ class CheckResult(BaseModel):
     """One rubric criterion or blocker. `fraction` is 0..1 of the rubric points earned.
 
     None means the check could not judge (it stays unchecked). Blockers use findings only.
+    `applies=False` means there was nothing to judge (for example, no images): full credit, no
+    provisional flag, and never listed as a strength.
     """
 
     criterion_id: str
     fraction: float | None = Field(default=None, ge=0.0, le=1.0)
+    applies: bool = True
     findings: list[Finding] = Field(default_factory=list)

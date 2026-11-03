@@ -1,0 +1,133 @@
+{
+  "title": "Help pick our next coffee pod flavor",
+  "source_url": "fixture://coffee",
+  "pages": [
+    {
+      "id": "p0",
+      "position": 0,
+      "kind": "intro",
+      "intro_text": "Thanks for helping shape Member's Mark! This takes about 2 minutes and you'll earn points."
+    },
+    {
+      "id": "p1",
+      "position": 1,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q1",
+          "text": "Which flavor would you try first?",
+          "kind": "image_choice",
+          "options": [
+            {
+              "id": "q1-0",
+              "label": "Hazelnut",
+              "media": {
+                "alt": "Hazelnut",
+                "natural_w": 1000,
+                "natural_h": 1000,
+                "rendered_w": 170,
+                "rendered_h": 170,
+                "bytes": 90000
+              }
+            },
+            {
+              "id": "q1-1",
+              "label": "Caramel",
+              "media": {
+                "alt": "Caramel",
+                "natural_w": 1000,
+                "natural_h": 1000,
+                "rendered_w": 170,
+                "rendered_h": 170,
+                "bytes": 90000
+              }
+            },
+            {
+              "id": "q1-2",
+              "label": "Vanilla",
+              "media": {
+                "alt": "Vanilla",
+                "natural_w": 1000,
+                "natural_h": 1000,
+                "rendered_w": 170,
+                "rendered_h": 170,
+                "bytes": 90000
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p2",
+      "position": 2,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q2",
+          "text": "How often do you make coffee at home?",
+          "kind": "single_choice",
+          "options": [
+            {
+              "id": "q2-0",
+              "label": "Every day"
+            },
+            {
+              "id": "q2-1",
+              "label": "A few times a week"
+            },
+            {
+              "id": "q2-2",
+              "label": "Rarely"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p3",
+      "position": 3,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q3",
+          "text": "Which of these do you buy? Select all that apply.",
+          "kind": "multi_choice",
+          "options": [
+            {
+              "id": "q3-0",
+              "label": "Pods"
+            },
+            {
+              "id": "q3-1",
+              "label": "Whole bean"
+            },
+            {
+              "id": "q3-2",
+              "label": "Ground"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p4",
+      "position": 4,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q4",
+          "text": "Anything else you'd like the product team to know?",
+          "kind": "text_long",
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "p5",
+      "position": 5,
+      "kind": "thank_you",
+      "text": "Thanks! Your feedback will help shape the next Member's Mark coffee pods."
+    }
+  ]
+}

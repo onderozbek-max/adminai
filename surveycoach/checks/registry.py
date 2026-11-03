@@ -49,6 +49,10 @@ def passed(criterion_id: str) -> CheckResult:
     return result(criterion_id, 1.0)
 
 
+def not_applicable(criterion_id: str) -> CheckResult:
+    return CheckResult(criterion_id=criterion_id, applies=False)
+
+
 def blocker_ok(blocker_id: str) -> CheckResult:
     return CheckResult(criterion_id=blocker_id)
 

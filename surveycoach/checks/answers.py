@@ -65,11 +65,14 @@ POSITIVE = re.compile(r"\b(like|satisfied|agree|good|great|excellent|likely|easy
 NEGATIVE = re.compile(r"\b(dislike|dissatisfied|disagree|poor|bad|terrible|unlikely|difficult|hard|unhappy|hate|unhelpful|worse)\w*", re.I)
 
 
+NEGATION = re.compile(r"\s*(not|never|no|none)\b", re.I)
+
+
 def polarity(label: str | None) -> int:
     """+1 positive, -1 negative, 0 neutral or unknown. Negative words win ('dislike' contains 'like')."""
     if not label:
         return 0
-    if NEGATIVE.search(label):
+    if NEGATION.match(label) or NEGATIVE.search(label):
         return -1
     return 1 if POSITIVE.search(label) else 0
 

@@ -1,0 +1,316 @@
+{
+  "title": "Member's Mark Boxer Briefs Feedback Survey",
+  "source_url": "fixture://boxer-briefs",
+  "pages": [
+    {
+      "id": "p0",
+      "position": 0,
+      "kind": "intro",
+      "intro_text": "Welcome to the Boxer Briefs Survey! This takes about 3 minutes."
+    },
+    {
+      "id": "p1",
+      "position": 1,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q1",
+          "text": "Which Member's Mark Boxer Briefs did you buy?",
+          "kind": "single_choice",
+          "options": [
+            {
+              "id": "q1-0",
+              "label": "Navy 3-pack"
+            },
+            {
+              "id": "q1-1",
+              "label": "Black 3-pack"
+            },
+            {
+              "id": "q1-2",
+              "label": "Grey 6-pack"
+            }
+          ],
+          "media": [
+            {
+              "element_id": "img1",
+              "natural_w": 1600,
+              "natural_h": 900,
+              "rendered_w": 349,
+              "rendered_h": 196,
+              "bytes": 650000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p2",
+      "position": 2,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q2",
+          "text": "How long have you owned them?",
+          "kind": "single_choice",
+          "options": [
+            {
+              "id": "q2-0",
+              "label": "Under 1 year"
+            },
+            {
+              "id": "q2-1",
+              "label": "1 to 5 years"
+            },
+            {
+              "id": "q2-2",
+              "label": "5 to 10 years"
+            },
+            {
+              "id": "q2-3",
+              "label": "Over 10 years"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p3",
+      "position": 3,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q3",
+          "text": "Please indicate your level of agreement with each of the following statements about the aforementioned boxer briefs.",
+          "kind": "grid_single",
+          "rows": [
+            "Statement 1",
+            "Statement 2",
+            "Statement 3",
+            "Statement 4",
+            "Statement 5",
+            "Statement 6",
+            "Statement 7"
+          ],
+          "scale": {
+            "points": 5,
+            "low_label": "Strongly disagree",
+            "high_label": "Strongly agree"
+          }
+        }
+      ]
+    },
+    {
+      "id": "p4",
+      "position": 4,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q4",
+          "text": "How much did you LOVE the fit? 🩲",
+          "kind": "single_choice",
+          "options": [
+            {
+              "id": "q4-0",
+              "label": "Not at all"
+            },
+            {
+              "id": "q4-1",
+              "label": "A little"
+            },
+            {
+              "id": "q4-2",
+              "label": "Somewhat"
+            },
+            {
+              "id": "q4-3",
+              "label": "Very much"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p5",
+      "position": 5,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q5",
+          "text": "Where do you usually shop for underwear?",
+          "kind": "dropdown",
+          "options": [
+            {
+              "id": "q5-0",
+              "label": "Sam's Club"
+            },
+            {
+              "id": "q5-1",
+              "label": "Walmart"
+            },
+            {
+              "id": "q5-2",
+              "label": "Target"
+            },
+            {
+              "id": "q5-3",
+              "label": "Online"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p6",
+      "position": 6,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q6",
+          "text": "Which of these matter to you?",
+          "kind": "multi_choice",
+          "options": [
+            {
+              "id": "q6-0",
+              "label": "Fit"
+            },
+            {
+              "id": "q6-1",
+              "label": "Comfort"
+            },
+            {
+              "id": "q6-2",
+              "label": "Price"
+            },
+            {
+              "id": "q6-3",
+              "label": "Fabric"
+            },
+            {
+              "id": "q6-4",
+              "label": "Waistband"
+            },
+            {
+              "id": "q6-5",
+              "label": "Durability"
+            },
+            {
+              "id": "q6-6",
+              "label": "Color"
+            },
+            {
+              "id": "q6-7",
+              "label": "Pack size"
+            },
+            {
+              "id": "q6-8",
+              "label": "Brand"
+            }
+          ],
+          "options_below_fold": 2,
+          "fits_one_screen": false
+        }
+      ]
+    },
+    {
+      "id": "p7",
+      "position": 7,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q7",
+          "text": "Click the one you like best.",
+          "kind": "single_choice",
+          "options": [
+            {
+              "id": "q7-0",
+              "label": "Classic"
+            },
+            {
+              "id": "q7-1",
+              "label": "Athletic"
+            },
+            {
+              "id": "q7-2",
+              "label": "Relaxed"
+            }
+          ],
+          "media": [
+            {
+              "element_id": "img2",
+              "alt": "Briefs",
+              "natural_w": 400,
+              "natural_h": 400,
+              "rendered_w": 349,
+              "rendered_h": 349,
+              "bytes": 40000
+            },
+            {
+              "element_id": "img3",
+              "alt": "Relaxed fit",
+              "loaded": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p8",
+      "position": 8,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q8",
+          "text": "Why did you choose them?",
+          "kind": "text_long"
+        }
+      ]
+    },
+    {
+      "id": "p9",
+      "position": 9,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q9",
+          "text": "What would you change?",
+          "kind": "text_long"
+        }
+      ]
+    },
+    {
+      "id": "p10",
+      "position": 10,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q10",
+          "text": "Tell us what else you would like to share?",
+          "kind": "text_long"
+        }
+      ]
+    },
+    {
+      "id": "p11",
+      "position": 11,
+      "kind": "question",
+      "questions": [
+        {
+          "id": "q11",
+          "text": "How likely are you to recommend them?",
+          "kind": "rating",
+          "scale": {
+            "points": 11,
+            "low_label": "Not at all likely"
+          }
+        }
+      ]
+    },
+    {
+      "id": "p12",
+      "position": 12,
+      "kind": "thank_you",
+      "text": "Survey complete."
+    }
+  ]
+}

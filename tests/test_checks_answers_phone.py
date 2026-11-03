@@ -160,3 +160,18 @@ def test_6_5_flags_outbound_links_and_truncated_text():
 
 def test_6_5_passes_a_clean_survey():
     assert run(phone.stays_put, single(question())).fraction == 1.0
+
+
+def test_negated_labels_are_negative():
+    from surveycoach.checks.answers import polarity
+    assert polarity("Not at all likely") == -1
+    assert polarity("Never") == -1
+    assert polarity("Very likely") == 1
+    assert polarity("Strongly disagree") == -1
+
+
+def test_4_4_does_not_flip_direction_for_negated_low_labels():
+    disagree = rating(scale(5, "Strongly disagree", "Strongly agree"), "r1")
+    unlikely = rating(scale(5, "Not at all likely", "Extremely likely"), "r2")
+    snapshot = survey(intro(), page(1, disagree), page(2, unlikely), thank_you())
+    assert run(answers.honest_scales, snapshot).fraction == 1.0

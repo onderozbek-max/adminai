@@ -24,6 +24,7 @@ class ScoreCard(BaseModel):
     by_dimension: dict[str, DimensionScore]
     open_blockers: list[str]
     kept_blockers: list[str]
+    pending_blockers: list[str]   # blockers no check has judged yet (the AI judge); 'ready' needs none
     readiness: Readiness
     strengths: list[str]
 
@@ -36,7 +37,9 @@ def score(rubric: Rubric, results: dict[str, CheckResult], kept_blockers: frozen
         if not criterion.active:
             continue
         result = results.get(criterion.id)
-        if result is None or result.fraction is None:
+        if result is not None and not result.applies:
+            earned[criterion.id] = float(criterion.points)
+        elif result is None or result.fraction is None:
             unchecked += criterion.points
             earned[criterion.id] = float(criterion.points)
         else:
@@ -54,6 +57,7 @@ def score(rubric: Rubric, results: dict[str, CheckResult], kept_blockers: frozen
     flagged = [b.id for b in rubric.blockers if _is_failed(results.get(b.id))]
     open_blockers = [b for b in flagged if b not in kept_blockers]
     kept = [b for b in flagged if b in kept_blockers]
+    pending = [b.id for b in rubric.blockers if b.id not in results]
 
     return ScoreCard(
         score=total,
@@ -62,7 +66,8 @@ def score(rubric: Rubric, results: dict[str, CheckResult], kept_blockers: frozen
         by_dimension=by_dimension,
         open_blockers=open_blockers,
         kept_blockers=kept,
-        readiness=_readiness(rubric, total, bool(open_blockers)),
+        pending_blockers=pending,
+        readiness=_readiness(rubric, total, bool(open_blockers), bool(pending)),
         strengths=_strengths(rubric, results),
     )
 
@@ -71,17 +76,19 @@ def _is_failed(result: CheckResult | None) -> bool:
     return bool(result) and any(f.severity == "must_fix" for f in result.findings)
 
 
-def _readiness(rubric: Rubric, total: float, has_open_blocker: bool) -> Readiness:
+def _readiness(rubric: Rubric, total: float, has_open_blocker: bool, has_pending_blocker: bool) -> Readiness:
     if has_open_blocker or total < rubric.readiness.almost_min:
         return "needs_work"
-    return "ready" if total >= rubric.readiness.ready_min else "almost_ready"
+    if total >= rubric.readiness.ready_min and not has_pending_blocker:
+        return "ready"
+    return "almost_ready"
 
 
 def _strengths(rubric: Rubric, results: dict[str, CheckResult]) -> list[str]:
     """Top 3 criteria that were actually checked and earned full credit, heaviest first."""
     full = [
         c for c in rubric.criteria
-        if c.active and (r := results.get(c.id)) is not None and r.fraction == 1.0
+        if c.active and (r := results.get(c.id)) is not None and r.applies and r.fraction == 1.0
     ]
     full.sort(key=lambda c: (-c.points, c.id))
     return [c.title for c in full[:3]]

@@ -7,7 +7,9 @@ AUTO_AND_AI = [c for c in RUBRIC.criteria if c.active]
 
 
 def full_marks() -> dict[str, CheckResult]:
-    return {c.id: CheckResult(criterion_id=c.id, fraction=1.0) for c in AUTO_AND_AI}
+    results = {c.id: CheckResult(criterion_id=c.id, fraction=1.0) for c in AUTO_AND_AI}
+    results.update({b.id: CheckResult(criterion_id=b.id) for b in RUBRIC.blockers})   # every blocker checked, none open
+    return results
 
 
 def must_fix(blocker_id: str) -> Finding:
@@ -46,7 +48,8 @@ def test_open_blocker_forces_needs_work_even_with_a_high_score():
 
 
 def test_kept_blocker_is_not_open_but_is_listed():
-    results = {"B5": CheckResult(criterion_id="B5", findings=[must_fix("B5")])}
+    results = full_marks()
+    results["B5"] = CheckResult(criterion_id="B5", findings=[must_fix("B5")])
     card = score(RUBRIC, results, kept_blockers=frozenset({"B5"}))
     assert card.open_blockers == []
     assert card.kept_blockers == ["B5"]
@@ -92,3 +95,12 @@ def test_fingerprint_is_stable_and_ignores_whitespace_and_case():
     b = a.model_copy(update={"evidence": "too long"})
     assert a.fingerprint == b.fingerprint
     assert a.fingerprint != a.model_copy(update={"question_id": "q2"}).fingerprint
+
+
+def test_ready_needs_every_blocker_checked_so_pending_ai_blockers_cap_it():
+    results = full_marks()
+    del results["B1"]      # the AI judge has not run yet
+    card = score(RUBRIC, results)
+    assert card.score == 100
+    assert card.pending_blockers == ["B1"]
+    assert card.readiness == "almost_ready"
