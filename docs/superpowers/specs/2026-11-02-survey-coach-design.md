@@ -356,7 +356,14 @@ class LlmProvider(Protocol):
   to a named temp file**, and the provider reads and validates that file. Stdout is never
   parsed: Wibey renders Markdown there, which strips underscores from keys and values
   (spike R2). Images are passed as absolute file paths in the prompt; Wibey opens them
-  itself. Measured: 10 to 13 s per call. Model is configurable in Settings.
+  itself. Measured: 10 to 13 s per call.
+- **Model (decided by Onder, 2026-11-02): `gpt-6.1-sol` assesses survey quality and writes
+  every recommendation.** It is one constant (`ASSESSMENT_MODEL` in the provider module),
+  not a researcher-facing setting, so every researcher gets the same judge and scores stay
+  comparable between reviews. The model name is stored on each AI result and is part of its
+  cache key, so changing it later is a deliberate, recorded decision that re-runs the AI
+  steps instead of silently mixing results. Code Puppy is the development tool, not part
+  of the product's runtime.
 - `FakeProvider`: deterministic canned responses for tests and offline demos.
 - `GatewayProvider` (future): WMT LLM Gateway when hosted on AI Launchpad.
 
