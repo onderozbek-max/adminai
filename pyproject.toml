@@ -20,3 +20,4 @@ surveycoach = ["data/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["live: talks to the real model (needs wibey and SURVEYCOACH_LIVE=1)"]
