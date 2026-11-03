@@ -352,8 +352,11 @@ class LlmProvider(Protocol):
 ```
 
 - `WibeyProvider` (v1): writes the prompt to a temp file and runs
-  `wibey -f <file> -m gpt-6.1-sol` headlessly; parses JSON from stdout. Model is
-  configurable in Settings.
+  `wibey -f <file> -m gpt-6.1-sol` headlessly. **The prompt tells Wibey to write its JSON
+  to a named temp file**, and the provider reads and validates that file. Stdout is never
+  parsed: Wibey renders Markdown there, which strips underscores from keys and values
+  (spike R2). Images are passed as absolute file paths in the prompt; Wibey opens them
+  itself. Measured: 10 to 13 s per call. Model is configurable in Settings.
 - `FakeProvider`: deterministic canned responses for tests and offline demos.
 - `GatewayProvider` (future): WMT LLM Gateway when hosted on AI Launchpad.
 
@@ -463,7 +466,7 @@ The researcher always sees something useful. Deterministic findings never wait o
 | # | Item | Impact | Proposed resolution |
 |---|---|---|---|
 | R1 | **Each crawl creates a participant and saves partial progress in live data** (confirmed in spike R1). | High | Accepted by Onder. Contained: one tagged participant per read, stop before final submit, visible notice to researchers (reader design, section 10). |
-| R2 | Wibey headless image support for vision checks is unverified. | Medium | Spike first. Fallback: text-only image checks (size, dimensions, alt text) until the gateway is available. |
+| R2 | ~~Wibey headless image support is unverified.~~ Confirmed in spike R2: reads images, returns exact JSON via file output, 10 to 13 s per call. | Low | Batch calls by dimension and run them in parallel to meet the performance budget. |
 | R3 | The navigator walks one qualifying path, so other branches may be unseen. | Medium | Backtracking past screen-outs, honest coverage report. Full branching comes from the future API structure source. |
 | R4 | Rubric thresholds in D6 and D7 may shift after the spike measures RedJade rendering (D-7). | Low | Rubric is data; changes go in the rubric and decision log. |
 | R6 | **Non-technical researchers can't install and run a local Python, Node, and Wibey app.** | High | Open question O-1 (section 16). |

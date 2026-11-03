@@ -63,7 +63,7 @@ samples. When the official RedJade API arrives it becomes the **structure** sour
 | Full-content screenshot | RedJade scrolls **inside an inner container** (spike R1b), so the capturer finds the scrolling element, scrolls it in steps, and stitches. `full_page` alone is wrong. |
 | Tagged DOM | Every question container, prompt, option, input, image, and button gets a stable `data-sc-id` before saving. Findings, pins, and "With fixes" patches use the same IDs. |
 | Accessibility tree | `aria_snapshot()`: roles and names of every control. |
-| Geometry | Bounding boxes, inner-scroller height vs. viewport (true "fits on one screen"), text overflow, computed fonts, image natural vs. rendered size. |
+| Geometry | Bounding boxes, text overflow, computed fonts, image natural vs. rendered size. **Fold** = answer controls whose bottom is below the top of the advance button (spike R1c: scroller measurement is unreliable on RedJade). |
 | Images | Section 7. |
 | Console errors, failed requests | Broken images (B7), rendering issues (6.5). |
 | Action log | What was observed, planned, done, and verified (section 4), with timings. |
@@ -71,14 +71,16 @@ samples. When the official RedJade API arrives it becomes the **structure** sour
 Each page is streamed to the UI as soon as it's captured (`page_captured` event), so the
 reading moment shows real pages arriving on the phone.
 
-### 3.3 Passive definition recording
+### 3.3 Passive definition recording (confirmed, spike R1c)
 
-RedJade's participant app must download the questionnaire to draw it. The recorder keeps
-every JSON response from `/api/v1/` (secrets redacted). If it contains the questionnaire
-definition (the previewer used `questionnaires/<id>` with `page_groups -> pages ->
-questions`, `answers`, `triggers`), the extractor chain uses it as the **highest-confidence
-source, including branches the walk never visited**. If RedJade doesn't send it, nothing
-breaks: the page-based extractors carry the read. First real crawl confirms which.
+RedJade's participant app downloads the whole questionnaire in the response to
+`POST /api/v1/surveys/in_progress_check_events`: `questionnaire.data.pages[]` with every
+page, question (`question_type`, HTML `text` per locale, `answers` with IDs and values,
+`config.randomize`, `config.media`), and page `triggers` (`condition: any | equal`,
+`parent_cid`, answer IDs). It includes pages the walk never visits. The recorder keeps
+every `/api/v1/` JSON response (secrets redacted); the parser accepts both this shape and
+the previewer's `data.page_groups[].pages`. The definition is the **highest-confidence
+source**. If a future survey doesn't deliver it, page-based extractors carry the read.
 
 ## 4. The page loop: OBSERVE, PLAN, ACT, VERIFY
 
@@ -94,8 +96,11 @@ for each page (until end, stop rule, or budget):
 
 ### 4.1 Response groups (generic detection)
 
-A **response group** is one thing a member must answer. Detection is platform-neutral,
-in this order, each signal adding confidence:
+A **response group** is one thing a member must answer. Every query filters to
+**visible** elements (RedJade keeps many hidden controls in the DOM). A control's group is
+the **nearest ancestor that holds at least two answer controls**: the option list for
+button-style answers (each RedJade button sits in its own wrapper), the row for a matrix.
+Signals, each adding confidence:
 
 1. ARIA: `radiogroup`, `group`, `listbox`, `slider`, `spinbutton`, `grid`, `table` with inputs.
 2. Native forms: inputs sharing a `name`, `fieldset`/`legend`, `select`, `textarea`, `input[type=*]`.
@@ -123,8 +128,10 @@ revealed them, and planned in turn.
 
 Found by role and accessible name (`Next`, `Continue`, `Begin`, `Start`, `Submit`,
 `Finish`, `Done`, arrow icons with an aria-label), position (bottom, sticky footer), and
-the rules file. Its label also feeds the stop rule (`Submit`, `Finish`, `Done` on a
-non-intro page = likely final submission; section 10).
+the rules file. **RedJade labels its last button "Next"** (spike R1c), so the final-page
+decision comes from the definition: the current page is final when no later page can be
+shown given the answers selected so far. Labels are only a fallback when no definition
+was captured.
 
 ### 4.5 Verify and repair
 
@@ -180,14 +187,23 @@ Strategies are registered in a list; the crawler core never knows question types
 | `Consent` | Single checkbox plus agreement text | Check it |
 | `VisionAssisted` | Anything with confidence below 0.5 | Section 5.6 |
 
-### 5.3 Answer policy
+### 5.3 Answer policy: coverage first
 
-- **Deterministic** (seeded): the same survey gets the same answers on every re-check,
-  so version diffs compare the same path.
-- Avoid exclusive answers ("None of these", "Prefer not to say") unless required.
-- **Screeners:** if the next page is a screen-out, capture it, then (budget permitting)
-  start a fresh session and pick a different option on the last screener question.
-  Budget: 3 sessions per read (each is one tagged participant; section 10).
+- **With a definition** (the normal case): pick the answers that unlock the most later
+  pages. Multi-select: every answer referenced by a later page's `any` trigger. Single
+  choice: the answer referenced by the most triggers. Never opt-outs ("I didn't...",
+  "None", "Prefer not", "Something else") unless nothing else unlocks a page. Spike R1c:
+  6 of 7 pages in one walk, versus 3 with naive picks.
+- **Path planner:** pages on mutually exclusive branches (for example, shown only for
+  "I didn't do anything") need another session. After the first walk, the planner picks
+  answer sets that reach the remaining unvisited pages, greedily covering the most pages
+  per session, within the session budget (3 per read). Pages still unvisited are read
+  from the definition (`reached: false`).
+- **Without a definition:** first usable option; multi-select picks up to 3 usable options.
+- **Deterministic:** answers are chosen by text, not position, because RedJade randomizes
+  option order (`randomize: unseeded`). The same survey gets the same answers every re-check.
+- **Screen-outs:** if a screen-out appears anyway, capture it and let the planner route
+  around it in the next session.
 
 ### 5.4 Answer text is a marker
 
@@ -318,8 +334,8 @@ page**. A crawler can't avoid that, so it's contained:
 | Rule | Detail |
 |---|---|
 | One participant per read | Re-checks are new reads. Screener backtracking adds at most 2 more (budget 3). |
-| **Tagged participants** | If RedJade accepts an `external_id` link parameter (its sign-in code sends one), every read uses `external_id=SURVEYCOACH-TEST-<read id>`, so researchers can filter or delete these participants. Verified on the first crawl; if unsupported, the marker text (5.4) is the fallback. |
-| **Never complete a response** | Stop before the final submission: an advance button labeled Submit, Finish, or Done on a non-intro page, a progress bar at 100%, or the last page of the definition JSON. The thank-you page is therefore not captured; coverage says so and D10 checks use the definition text when available. |
+| **Tagged participants** (confirmed, spike R1c) | Every read appends `external_id=SURVEYCOACH-TEST-<read id>` to the link; RedJade sends it with the sign-in, so researchers can filter or delete these participants. Note: surveys that skip the start screen sign in **on page load**. |
+| **Never complete a response** | Stop before advancing from the final page, decided by the definition (4.4). Spike R1c: the label-based rule failed (RedJade's last button says "Next"); the definition rule worked. The thank-you page text comes from the definition when present; otherwise coverage says it wasn't captured. |
 | Never retake | Fresh context per read; no participant reuse. |
 | Visible to researchers | The paste box says: "Reading this survey adds one test participant, tagged SurveyCoach, to RedJade. Exclude it from results." The sign-off packet lists each read's tag. |
 | Prefer pre-launch reads | Guidance: check surveys before the link goes to members. |
@@ -367,10 +383,10 @@ their tags; replica fallbacks.
 **Assumptions the crawler depends on** (deliberately few):
 
 1. The public link opens without login (confirmed for the three examples).
-2. No bot challenge (none seen in RedJade's code path).
+2. No bot challenge (none in four crawls of posthalloween26).
 
-**Nice to have, verified on the first crawl, not required:** questionnaire JSON visible
-in network traffic (3.3); `external_id` tagging (10).
+**Confirmed in spike R1c (no longer assumptions):** questionnaire JSON delivered passively
+(3.3); `external_id` tagging (10); button-style answers; last button labeled "Next".
 
 **Rejected: reading through RedJade's previewer** (spike R1b). It worked technically and
 saved nothing, but needed a RedJade account, per-project sharing, and possibly an admin
