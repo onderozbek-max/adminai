@@ -1,0 +1,22 @@
+[project]
+name = "surveycoach"
+version = "0.1.0"
+description = "Reviews MMC surveys against the approved rubric, mobile first."
+requires-python = ">=3.12"
+dependencies = ["pydantic>=2", "pyyaml", "pillow"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["surveycoach*"]
+
+[tool.setuptools.package-data]
+surveycoach = ["data/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
