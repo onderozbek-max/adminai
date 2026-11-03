@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import re
 
-from surveycoach.checks.registry import ReviewContext, check, clip, finding, result, share_fraction
+from surveycoach.checks.images import all_media
+from surveycoach.checks.registry import (Problem, ReviewContext, check, clip, problem_finding, result,
+                                         share_fraction)
+from surveycoach.checks.text import plural, swap_word
 from surveycoach.findings import CheckResult, Finding
 from surveycoach.snapshot import Question
 
@@ -16,6 +19,7 @@ MAX_GRID_COLUMNS = 5
 MAX_SCALE_POINTS = 7
 DESKTOP_WORDS = re.compile(r"\b(click(?:ing)?|double-click|right-click|hover|drag(?:ging)?|on the (?:left|right)|"
                            r"(?:left|right)[- ]hand side)\b", re.I)
+TAP_FOR = {"click": "tap", "clicking": "tapping", "double-click": "double-tap", "right-click": "press and hold"}
 CHOICE_KINDS = {"single_choice", "multi_choice", "dropdown", "image_choice"}
 GRID_KINDS = {"grid_single", "grid_multi"}
 TRUNCATED = re.compile(r"(\.\.\.|\u2026)\s*$")
@@ -25,30 +29,21 @@ def _questions(ctx: ReviewContext) -> list[Question]:
     return [q for q in ctx.snapshot.all_questions() if q.kind != "info"]
 
 
-def _phone_finding(criterion: str, q: Question, evidence: str, fix: str, impact: str) -> Finding:
-    return finding(criterion, "worth_improving", evidence, fix, impact, question_id=q.id)
+def _on_question(criterion: str, q: Question, problem: Problem, impact: str) -> Finding:
+    return problem_finding(criterion, problem, impact, question_id=q.id)
 
 
-def _screen_problems(page, q_findings) -> list[Finding]:
-    problems = list(q_findings)
-    if len([q for q in page.questions if not q.conditional]) > 1:
-        problems.append(finding("6.1", "worth_improving", f"{len(page.questions)} questions on one screen.",
-                                "Show one question per screen.", "Crowded screens need a lot of scrolling on a phone.",
-                                page_id=page.id))
-    return problems
-
-
-def _question_fit_findings(q: Question) -> list[Finding]:
+def _question_fit_problems(q: Question) -> list[Problem]:
     found = []
     words = len(q.text.split())
     if words > MAX_QUESTION_WORDS:
-        found.append(_phone_finding("6.1", q, f"{words} words: {clip(q.text, 90)}",
-                                    f"Shorten the question to about {MAX_QUESTION_WORDS} words or fewer.",
-                                    "Long questions push the answers off the first screen."))
+        found.append(Problem(f"Question runs {words} words; aim for {MAX_QUESTION_WORDS}", f"{words} words: {clip(q.text, 90)}",
+                             f"Shorten the question to about {MAX_QUESTION_WORDS} words or fewer.", current=q.text))
     if q.options_below_fold or q.fits_one_screen is False:
-        found.append(_phone_finding("6.1", q, f"{q.options_below_fold} answer(s) are below the fold on a phone.",
-                                    "Trim or group the answers so the question and its first answers show without scrolling.",
-                                    "Members may never see the answers they'd have picked."))
+        below = (f"{plural(q.options_below_fold, 'answer')} below the fold on a phone"
+                 if q.options_below_fold else "Question doesn't fit one phone screen")
+        found.append(Problem(below, below + ".",
+                             "Trim or group the answers so the question and its first answers show without scrolling."))
     return found
 
 
@@ -58,8 +53,12 @@ def fits_one_screen(ctx: ReviewContext) -> CheckResult:
     screens = [p for p in ctx.snapshot.pages if any(q.kind != "info" for q in p.questions)]
     findings, failing = [], 0
     for page in screens:
-        problems = _screen_problems(page, [f for q in page.questions if q.kind != "info"
-                                           for f in _question_fit_findings(q)])
+        problems = [_on_question("6.1", q, pr, "Long questions push the answers off the first screen.")
+                    for q in page.questions if q.kind != "info" for pr in _question_fit_problems(q)]
+        if len([q for q in page.questions if not q.conditional]) > 1:
+            crowd = f"{plural(len(page.questions), 'question')} on one screen"
+            problems.append(problem_finding("6.1", Problem(crowd, crowd + ".", "Show one question per screen."),
+                                            "Crowded screens need a lot of scrolling on a phone.", page_id=page.id))
         failing += bool(problems)
         findings += problems
     return result("6.1", share_fraction(failing, len(screens)), *findings)
@@ -75,14 +74,17 @@ def tappable_answers(ctx: ReviewContext) -> CheckResult:
         problems = []
         long_labels = [o.label for o in q.options if len(o.label) > MAX_LABEL_CHARS]
         if long_labels:
-            problems.append((clip(long_labels[0], 90), f"Keep each answer to about {MAX_LABEL_CHARS} characters (2 lines)."))
+            problems.append(Problem("Answer text is too long to tap comfortably", clip(long_labels[0], 90),
+                                    f"Keep each answer to about {MAX_LABEL_CHARS} characters (2 lines).",
+                                    current=long_labels[0], highlight=long_labels[0]))
         if len(q.options) > MAX_CHOICES:
-            problems.append((f"{len(q.options)} answer choices.", f"Group, alphabetize, or trim to {MAX_CHOICES} or fewer."))
+            problems.append(Problem(f"{len(q.options)} answer choices; cut to {MAX_CHOICES}", f"{len(q.options)} answer choices.",
+                                    f"Group, alphabetize, or trim to {MAX_CHOICES} or fewer."))
         if q.kind == "dropdown" and len(q.options) <= MAX_DROPDOWN_BUTTONS:
-            problems.append((f"A dropdown with only {len(q.options)} choices.", "Use buttons instead; they take one tap, not two."))
+            problems.append(Problem(f"Dropdown with only {len(q.options)} choices", f"A dropdown with only {len(q.options)} choices.",
+                                    "Use buttons instead; they take one tap, not two."))
         failing += bool(problems)
-        findings += [_phone_finding("6.2", q, ev, fix, "Long or crowded answers are hard to read and tap on a phone.")
-                     for ev, fix in problems]
+        findings += [_on_question("6.2", q, pr, "Long or crowded answers are hard to read and tap on a phone.") for pr in problems]
     return result("6.2", share_fraction(failing, total), *findings)
 
 
@@ -95,31 +97,44 @@ def small_grids(ctx: ReviewContext) -> CheckResult:
         if q.kind in GRID_KINDS:
             total += 1
             if len(q.rows) > MAX_GRID_ROWS:
-                problems.append((f"A grid with {len(q.rows)} rows.", f"Split it into separate questions of {MAX_GRID_ROWS} rows or fewer."))
+                problems.append(Problem(f"Grid has {len(q.rows)} rows; split it", f"A grid with {len(q.rows)} rows.",
+                                        f"Split it into separate questions of {MAX_GRID_ROWS} rows or fewer."))
             if columns > MAX_GRID_COLUMNS:
-                problems.append((f"A grid with {columns} columns.", f"Use {MAX_GRID_COLUMNS} columns or fewer."))
+                problems.append(Problem(f"Grid has {columns} columns; use {MAX_GRID_COLUMNS}", f"A grid with {columns} columns.",
+                                        f"Use {MAX_GRID_COLUMNS} columns or fewer."))
         elif q.scale and q.kind in {"rating", "slider"}:
             total += 1
             if q.scale.points > MAX_SCALE_POINTS:
-                problems.append((f"A {q.scale.points}-point scale.", f"Use {MAX_SCALE_POINTS} points or fewer; a 0 to 10 scale is hard to tap."))
+                problems.append(Problem(f"{q.scale.points}-point scale is hard to tap", f"A {q.scale.points}-point scale.",
+                                        f"Use {MAX_SCALE_POINTS} points or fewer; a 0 to 10 scale is hard to tap."))
         failing += bool(problems)
-        findings += [_phone_finding("6.3", q, ev, fix, "Wide grids and long scales force sideways scrolling and mis-taps.")
-                     for ev, fix in problems]
+        findings += [_on_question("6.3", q, pr, "Wide grids and long scales force sideways scrolling and mis-taps.") for pr in problems]
     return result("6.3", share_fraction(failing, total), *findings)
+
+
+def _desktop_word(q: Question) -> tuple[str, str] | None:
+    for text in (q.text, q.help_text, *[o.label for o in q.options]):
+        if match := DESKTOP_WORDS.search(text):
+            return text, match.group(0)
+    return None
 
 
 @check("6.4")
 def thumb_friendly(ctx: ReviewContext) -> CheckResult:
     findings, failing = [], 0
     for q in _questions(ctx):
-        texts = [q.text, q.help_text, *[o.label for o in q.options]]
         problems = []
-        if match := next((m for t in texts if (m := DESKTOP_WORDS.search(t))), None):
-            problems.append((f'"{match.group(0)}" is a desktop word.', 'Say "tap" and avoid "left" or "right".'))
+        if hit := _desktop_word(q):
+            text, word = hit
+            replacement = TAP_FOR.get(word.lower())
+            problems.append(Problem(f'"{word}" is a desktop word', f'"{word}" is a desktop word.',
+                                    'Say "tap" and avoid "left" or "right".', current=text, highlight=word,
+                                    suggested=swap_word(text, word, replacement) if replacement else None))
         if q.kind in {"ranking", "slider"}:
-            problems.append((f"A {q.kind} question.", "Offer a tap alternative: drag-and-drop and precision sliders are hard with a thumb."))
+            problems.append(Problem(f"{q.kind.capitalize()} question is hard with a thumb", f"A {q.kind} question.",
+                                    "Offer a tap alternative: drag-and-drop and precision sliders are hard with a thumb."))
         failing += bool(problems)
-        findings += [_phone_finding("6.4", q, ev, fix, "Members on a phone can't click, hover, or drag.") for ev, fix in problems]
+        findings += [_on_question("6.4", q, pr, "Members on a phone can't click, hover, or drag.") for pr in problems]
     return result("6.4", share_fraction(failing, len(_questions(ctx))), *findings)
 
 
@@ -129,13 +144,16 @@ def stays_put(ctx: ReviewContext) -> CheckResult:
     for page in ctx.snapshot.pages:
         if page.links_out:
             failing += 1
-            findings.append(finding("6.5", "worth_improving", f"Links away from the survey: {', '.join(page.links_out[:2])}",
-                                    "Remove the link, or open it in a way that keeps the member's progress.",
-                                    "Leaving the survey can lose all progress.", page_id=page.id))
+            link = Problem("Link leads away from the survey", f"Links away from the survey: {', '.join(page.links_out[:2])}",
+                           "Remove the link, or open it in a way that keeps the member's progress.")
+            findings.append(problem_finding("6.5", link, "Leaving the survey can lose all progress.", page_id=page.id))
     for q in _questions(ctx):
         if TRUNCATED.search(q.text):
             failing += 1
-            findings.append(_phone_finding("6.5", q, q.text[-60:], "Show the full question text.",
-                                           "Cut-off text leaves members guessing what is being asked."))
-    total = len(ctx.snapshot.pages) + len(_questions(ctx))
+            cut = Problem("Question text is cut off", q.text[-60:], "Show the full question text.", current=q.text)
+            findings.append(_on_question("6.5", q, cut, "Cut-off text leaves members guessing what is being asked."))
+    # A picture that did not load is missing content. The must-fix (B7) already reports it, so it only costs credit here.
+    media = all_media(ctx)
+    failing += sum(not ref.media.loaded for ref in media)
+    total = len(ctx.snapshot.pages) + len(_questions(ctx)) + len(media)
     return result("6.5", share_fraction(failing, total), *findings)

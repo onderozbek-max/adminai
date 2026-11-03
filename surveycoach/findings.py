@@ -11,14 +11,25 @@ Severity = Literal["must_fix", "worth_improving"]
 
 
 class Finding(BaseModel):
+    """One problem, worded so a researcher can act on it.
+
+    `headline` names the problem (never the rubric criterion). `current_text` and `suggested_text`
+    are a before/after the researcher can paste into RedJade; they are only set when a check can
+    really produce one. `highlight` is the exact word or phrase in the survey that is at fault.
+    """
+
     criterion_id: str
     severity: Severity
+    headline: str
     evidence: str
     explanation: str
     member_impact: str
     page_id: str | None = None
     question_id: str | None = None
     element_id: str | None = None
+    current_text: str | None = None
+    suggested_text: str | None = None
+    highlight: str | None = None
     source: Literal["auto", "ai"] = "auto"
 
     @property

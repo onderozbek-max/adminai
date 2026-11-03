@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import re
 
-from surveycoach.checks.registry import (ReviewContext, blocker_ok, check, finding, not_applicable, passed,
-                                         clip, result)
+from surveycoach.checks.registry import (ReviewContext, blocker_ok, check, clip, finding, not_applicable, passed,
+                                         result)
+from surveycoach.checks.text import plural
 from surveycoach.findings import CheckResult
 from surveycoach.snapshot import Page
 
@@ -12,11 +13,35 @@ SCREEN_OUT_EFFORT_SECONDS = 120
 OPEN_TEXT = {"text_short", "text_long"}
 REWARD_WORDS = re.compile(r"\b(points?|rewards?|earn(?:ed|ing)?|gift ?cards?|\$\d+)\b", re.I)
 THANKS = re.compile(r"\bthank", re.I)
+MINUTES_PHRASE = re.compile(
+    r"(?:about\s+)?\d+(?:\.\d+)?\s*(?:(?:-|\u2013|to)\s*\d+(?:\.\d+)?\s*)?(?:minutes?|mins?)\b", re.I)
+REWARD_SENTENCE = "You'll earn points for finishing."
 FORMAT_FAMILY = {
     "single_choice": "single choice", "dropdown": "single choice", "multi_choice": "multiple choice",
     "rating": "rating", "text_short": "open text", "text_long": "open text", "image_choice": "image choice",
     "ranking": "ranking", "best_worst": "ranking", "grid_single": "grid", "grid_multi": "grid", "slider": "slider",
 }
+
+
+def _minutes_said(minutes: float) -> str:
+    return f"about {max(1, round(minutes))} minutes"
+
+
+def fixed_intro(intro: str, minutes: float, *, fix_time: bool, add_reward: bool) -> str:
+    """The intro rewritten with the true time and a reward line, ready to paste."""
+    text = intro.strip()
+    if fix_time:
+        said = _minutes_said(minutes)
+        text = MINUTES_PHRASE.sub(said, text, count=1) if MINUTES_PHRASE.search(text) else f"{text} This takes {said}."
+    return f"{text} {REWARD_SENTENCE}" if add_reward else text
+
+
+def _promise_broken(promised: float, estimated: float) -> bool:
+    return estimated > promised * 1.5 and estimated - promised > 3
+
+
+def _promise_overrun(promised: float, estimated: float) -> bool:
+    return estimated > promised * 1.25 and estimated - promised >= 1
 
 
 def _question_pages(ctx: ReviewContext) -> list[Page]:
@@ -33,20 +58,25 @@ def no_intro(ctx: ReviewContext) -> CheckResult:
     if pages and pages[0].kind == "intro":
         return blocker_ok("B4")
     return result("B4", None, finding(
-        "B4", "must_fix", "The survey opens straight into questions.",
+        "B4", "must_fix", "Survey opens with no welcome page", "The survey opens straight into questions.",
         "Add a short welcome page before the first question: why we're asking, how long it takes, and the reward.",
-        "Members don't know why they're here or what they get, so more of them leave."))
+        "Members don't know why they're here or what they get, so more of them leave.",
+        suggested_text=f"Thanks for helping! This takes {_minutes_said(ctx.timing.minutes)}. {REWARD_SENTENCE}"))
 
 
 @check("B5")
 def broken_time_promise(ctx: ReviewContext) -> CheckResult:
     promised, estimated = ctx.promised_minutes, ctx.timing.minutes
-    if promised is None or not (estimated > promised * 1.5 and estimated - promised > 3):
+    if promised is None or not _promise_broken(promised, estimated):
         return blocker_ok("B5")
+    intro = ctx.snapshot.intro_text
     return result("B5", None, finding(
-        "B5", "must_fix", f"The intro promises {promised:g} minutes; we estimate about {estimated:g}.",
+        "B5", "must_fix", f"Intro promises {promised:g} min; members need about {estimated:.0f}",
+        f"The intro promises {promised:g} minutes; we estimate about {estimated:g}.",
         f"Either shorten the survey to about {promised:g} minutes or update the intro to say about {estimated:.0f} minutes.",
-        "Members promised a short survey who get a long one stop trusting every future promise."))
+        "Members promised a short survey who get a long one stop trusting every future promise.",
+        current_text=intro, suggested_text=fixed_intro(intro, estimated, fix_time=True, add_reward=False),
+        highlight=(MINUTES_PHRASE.search(intro) or [None])[0]))
 
 
 def _screen_out_pages(ctx: ReviewContext) -> list[tuple[int, Page]]:
@@ -60,33 +90,51 @@ def late_screen_out(ctx: ReviewContext) -> CheckResult:
         effort = ctx.timing.pages[index - 1].cumulative_seconds if index > 0 else 0
         if effort > SCREEN_OUT_EFFORT_SECONDS:
             findings.append(finding(
-                "B3", "must_fix", f"Members can be screened out after about {effort / 60:.0f} minutes of effort.",
+                "B3", "must_fix", f"Members are screened out after about {effort / 60:.0f} min of effort",
+                f"Members can be screened out after about {effort / 60:.0f} minutes of effort.",
                 "Move the qualifying questions to the start so unqualified members find out in under 2 minutes.",
                 "Spending minutes and then being told you don't qualify is the fastest way to lose a member.",
                 page_id=page.id))
         if not THANKS.search(page.text or page.intro_text):
             findings.append(finding(
-                "B3", "must_fix", clip(page.text) or "The screen-out page has no thank-you.",
+                "B3", "must_fix", "Screen-out page has no thank-you",
+                clip(page.text) or "The screen-out page has no thank-you.",
                 "Thank members warmly on the screen-out page, for example: Thanks for your time! "
                 "This one isn't a match, but we'd love your help on the next one.",
-                "Members who don't qualify still decide whether to come back.", page_id=page.id))
+                "Members who don't qualify still decide whether to come back.", page_id=page.id,
+                current_text=page.text or None,
+                suggested_text="Thanks for your time! This one isn't a match, but we'd love your help on the next one."))
     return result("B3", None, *findings) if findings else blocker_ok("B3")
 
 
 @check("1.4")
 def time_and_reward(ctx: ReviewContext) -> CheckResult:
-    intro = ctx.snapshot.intro_text
-    has_time, has_reward = ctx.promised_minutes is not None, bool(REWARD_WORDS.search(intro))
-    findings = []
-    if not has_time:
-        findings.append(finding("1.4", "worth_improving", "The intro doesn't say how long the survey takes.",
-                                f"Add the time, for example: This takes about {max(1, round(ctx.timing.minutes))} minutes.",
-                                "Members decide whether to start based on the time it asks of them."))
-    if not has_reward:
-        findings.append(finding("1.4", "worth_improving", "The intro doesn't mention the reward.",
-                                "Say what members get, for example: You'll earn points for finishing.",
-                                "A clear reward makes starting feel worth it."))
-    return result("1.4", (has_time + has_reward) / 2, *findings)
+    intro, promised, estimated = ctx.snapshot.intro_text, ctx.promised_minutes, ctx.timing.minutes
+    no_time = promised is None
+    overrun = promised is not None and _promise_overrun(promised, estimated)
+    no_reward = not REWARD_WORDS.search(intro)
+    fraction = ((not no_time and not overrun) + (not no_reward)) / 2
+    # B5 reports a badly broken promise; here only the smaller overruns, so nothing is said twice.
+    wrong_time = overrun and not _promise_broken(promised, estimated)
+    parts, details = [], []
+    if no_time:
+        parts.append("doesn't say how long it takes")
+        details.append("The intro doesn't say how long the survey takes.")
+    if wrong_time:
+        parts.append(f"says {promised:g} min but it takes about {max(1, round(estimated))}")
+        details.append(f"The intro promises {promised:g} minutes; we estimate about {estimated:g}.")
+    if no_reward:
+        parts.append("skips the reward")
+        details.append("The intro doesn't mention the reward.")
+    if not parts:
+        return result("1.4", fraction)
+    return result("1.4", fraction, finding(
+        "1.4", "worth_improving", "Intro " + " and ".join(parts), " ".join(details),
+        "Say the true time and what members get, so they can decide to start. The suggested intro does both.",
+        "Members decide whether to start from the time and reward; a wrong time breaks trust.",
+        current_text=intro or None,
+        suggested_text=fixed_intro(intro, estimated, fix_time=no_time or wrong_time, add_reward=no_reward),
+        highlight=(MINUTES_PHRASE.search(intro) or [None])[0] if wrong_time else None))
 
 
 @check("2.1")
@@ -97,7 +145,8 @@ def length_fits_type(ctx: ReviewContext) -> CheckResult:
         return passed("2.1")
     fraction = 0.6 if minutes <= partial else 0.0
     return result("2.1", fraction, finding(
-        "2.1", "worth_improving", f"About {minutes:g} minutes across {count} questions; the target is up to {full:g}.",
+        "2.1", "worth_improving", f"Takes about {minutes:g} min; the target is {full:g}",
+        f"About {minutes:g} minutes across {count} questions; the target is up to {full:g}.",
         f"Cut to about {full:g} minutes by removing or merging questions that don't drive a decision.",
         "Every extra minute on a phone costs completions and goodwill."))
 
@@ -111,7 +160,8 @@ def screeners_first(ctx: ReviewContext) -> CheckResult:
         answered = sum(len(p.questions) for p in ctx.snapshot.pages[:index])
         if answered > 3:
             late.append(finding(
-                "2.2", "worth_improving", f"A screen-out comes after {answered} questions.",
+                "2.2", "worth_improving", f"Screen-out comes after {plural(answered, 'question')}",
+                f"A screen-out comes after {answered} questions.",
                 "Put every qualifying question in the first 3 screens.",
                 "Late screening wastes the time of members who never qualified.", page_id=page.id))
     return result("2.2", 0.0 if late else 1.0, *late)
@@ -121,9 +171,10 @@ def screeners_first(ctx: ReviewContext) -> CheckResult:
 def typing_load(ctx: ReviewContext) -> CheckResult:
     required = [q for q in ctx.snapshot.all_questions() if q.kind in OPEN_TEXT and q.required]
     fraction = 1.0 if len(required) <= 2 else 0.5 if len(required) == 3 else 0.0
-    findings = [finding("2.4", "worth_improving", clip(q.text),
+    findings = [finding("2.4", "worth_improving", "Required typing question; make it optional", clip(q.text),
                         "Make this answer optional, or replace it with answer choices.",
-                        "Typing on a phone is work, and required typing makes members quit.", question_id=q.id)
+                        "Typing on a phone is work, and required typing makes members quit.",
+                        question_id=q.id, current_text=q.text)
                 for q in required[2:]]
     return result("2.4", fraction, *findings)
 
@@ -139,7 +190,9 @@ def format_variety(ctx: ReviewContext) -> CheckResult:
         return passed("8.2")
     fraction = 0.5 if len(questions) > 8 and len(formats) == 2 else 0.0
     return result("8.2", fraction, finding(
-        "8.2", "worth_improving", f"{len(questions)} questions use {len(formats)} format(s): {', '.join(sorted(formats))}.",
+        "8.2", "worth_improving",
+        "Every question looks the same" if len(formats) == 1 else f"Only {len(formats)} question formats; mix in more",
+        f"{len(questions)} questions use {len(formats)} format(s): {', '.join(sorted(formats))}.",
         f"Mix in at least {needed} formats, such as a rating, an image choice, or a short optional comment.",
         "The same question shape again and again feels like a chore."))
 
@@ -150,6 +203,7 @@ def room_to_speak(ctx: ReviewContext) -> CheckResult:
     if any(q.kind in OPEN_TEXT and not q.required for q in tail):
         return passed("8.6")
     return result("8.6", 0.0, finding(
-        "8.6", "worth_improving", "No optional comment box near the end.",
+        "8.6", "worth_improving", "No optional comment box near the end", "No optional comment box near the end.",
         "Add one optional question: Anything else you'd like the product team to know?",
-        "Members who have something to say feel heard when they get the chance."))
+        "Members who have something to say feel heard when they get the chance.",
+        suggested_text="Anything else you'd like the product team to know? (optional)"))

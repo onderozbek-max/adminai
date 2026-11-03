@@ -74,7 +74,7 @@ def test_1_4_no_credit_when_both_missing():
     snapshot = one_question_survey(question())
     snapshot.pages[0].intro_text = "Welcome to the survey."
     result = run(structure.time_and_reward, snapshot)
-    assert result.fraction == 0.0 and len(result.findings) == 2
+    assert result.fraction == 0.0 and len(result.findings) == 1   # one intro rewrite, not two
 
 
 # 2.1 length fits the type

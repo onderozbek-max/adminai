@@ -45,3 +45,48 @@ def title_case_signature(text: str) -> bool:
         if any(t in FUNCTION_WORDS for t in tokens[1:]):
             return True
     return False
+
+
+def plural(count: int, noun: str) -> str:
+    return f"{count} {noun}" if count == 1 else f"{count} {noun}s"
+
+
+def swap_word(text: str, old: str, new: str) -> str:
+    """Replace a whole word, keeping a leading capital. An empty `new` removes the word and its space."""
+    def pick(match: re.Match) -> str:
+        found = match.group(0)
+        return new[:1].upper() + new[1:] if found[:1].isupper() and new else new
+    swapped = re.sub(rf"\b{re.escape(old)}\b", pick, text, flags=re.I)
+    return re.sub(r"\s{2,}", " ", swapped).replace(" ,", ",").replace(" .", ".").strip()
+
+
+PROTECTED_NAMES = ("Member's Mark", "Member\u2019s Mark", "Sam's Club", "Sam\u2019s Club", "RedJade", "MMC")
+
+
+def sentence_case(text: str) -> str:
+    """Lowercase everything except the first word of each sentence, acronyms, and brand names."""
+    held = {f"\x00{i}\x00": name for i, name in enumerate(PROTECTED_NAMES)}
+    for token, name in held.items():
+        text = text.replace(name, token)
+
+    def fix_sentence(sentence: str) -> str:
+        words = sentence.split(" ")
+        fixed = [w if (i == 0 or w.isupper() or "\x00" in w) else w.lower() for i, w in enumerate(words)]
+        fixed[0] = fixed[0][:1].upper() + fixed[0][1:]
+        return " ".join(fixed)
+
+    result = " ".join(fix_sentence(s) for s in SENTENCE_END.split(text))
+    for token, name in held.items():
+        result = result.replace(token, name)
+    return result
+
+
+def limit_emoji(text: str, keep: int = 0) -> str:
+    """Remove emoji beyond the first `keep`, and the space left behind."""
+    seen = 0
+
+    def drop(match: re.Match) -> str:
+        nonlocal seen
+        seen += 1
+        return match.group(0) if seen <= keep else ""
+    return re.sub(r"\s{2,}", " ", EMOJI.sub(drop, text)).strip()

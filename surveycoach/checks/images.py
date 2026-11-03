@@ -4,8 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from surveycoach.checks.registry import (ReviewContext, blocker_ok, check, finding, not_applicable, passed, result,
-                                         share_fraction)
+from surveycoach.checks.registry import (Problem, ReviewContext, blocker_ok, check, finding, not_applicable, passed,
+                                         problem_finding, result, share_fraction)
 from surveycoach.findings import CheckResult, Finding
 from surveycoach.imageio import BLUR_MIN, analyze_image
 from surveycoach.snapshot import Media
@@ -44,8 +44,13 @@ def _ratio(m: Media) -> float | None:
     return w / h if w and h else None
 
 
-def _img_finding(criterion: str, ref: MediaRef, evidence: str, fix: str, impact: str) -> Finding:
-    return finding(criterion, "worth_improving", evidence, fix, impact, page_id=ref.page_id, question_id=ref.question_id)
+def _label(ref: MediaRef) -> str:
+    return (ref.media.alt or "").strip() or ref.media.element_id or "an image"
+
+
+def _img_finding(criterion: str, ref: MediaRef, problem: Problem, impact: str) -> Finding:
+    return problem_finding(criterion, problem, impact, page_id=ref.page_id, question_id=ref.question_id,
+                           element_id=ref.media.element_id or None)
 
 
 @check("7.2")
@@ -66,27 +71,28 @@ def phone_friendly_shape(ctx: ReviewContext) -> CheckResult:
     if worst_ref is None:
         return passed("7.2") if any(_ratio(r.media) for r in all_media(ctx)) else not_applicable("7.2")
     shape = "wide" if worst_ratio > 1 else "tall"
-    return result("7.2", worst, _img_finding(
-        "7.2", worst_ref, f"A {shape} image ({worst_ratio:.2f} wide for every 1 tall).",
-        "Crop it to 4:5 (portrait) so the product fills the phone width instead of shrinking to a strip.",
+    return result("7.2", worst, _img_finding("7.2", worst_ref, Problem(
+        f"{shape.capitalize()} image makes the product small", f"A {shape} image ({worst_ratio:.2f} wide for every 1 tall).",
+        "Crop it to 4:5 (portrait) so the product fills the phone width instead of shrinking to a strip."),
         "At phone width, a wide image makes the product tiny and awkward."))
 
 
-def _sharpness_problems(ref: MediaRef) -> list[tuple[str, str]]:
+def _sharpness_problems(ref: MediaRef) -> list[Problem]:
     m, problems = ref.media, []
     if m.natural_w and m.rendered_w:
         if m.rendered_w >= FULL_WIDTH_CSS_PX and m.natural_w < MIN_FULL_WIDTH_PIXELS:
-            problems.append((f"{m.natural_w} px wide, shown full width.",
-                             f"Use the original file, at least {MIN_FULL_WIDTH_PIXELS} px wide. Never upscale a small one."))
+            problems.append(Problem("Image is too small to show full width", f"{m.natural_w} px wide, shown full width.",
+                                    f"Use the original file, at least {MIN_FULL_WIDTH_PIXELS} px wide. Never upscale a small one."))
         elif m.natural_w < m.rendered_w * MIN_DENSITY:
-            problems.append((f"{m.natural_w} px wide, shown at {m.rendered_w} px.",
-                             "Use a larger original so it stays crisp on high-density phone screens."))
+            problems.append(Problem("Image will look soft on sharp phone screens", f"{m.natural_w} px wide, shown at {m.rendered_w} px.",
+                                    "Use a larger original so it stays crisp on high-density phone screens."))
     if m.natural_w and m.natural_h and m.rendered_w and m.rendered_h and m.object_fit not in {"cover", "contain", "scale-down"}:
         drift = abs(m.natural_w / m.natural_h - m.rendered_w / m.rendered_h) / (m.natural_w / m.natural_h)
         if drift > 0.05:
-            problems.append(("The image is stretched or squashed.", "Show it at its natural shape, or crop it deliberately."))
+            problems.append(Problem("Image is stretched or squashed", "The image is stretched or squashed.",
+                                    "Show it at its natural shape, or crop it deliberately."))
     if m.asset_path and Path(m.asset_path).exists() and analyze_image(m.asset_path).blur_score < BLUR_MIN:
-        problems.append(("The image looks blurry.", "Replace it with a sharper original photo."))
+        problems.append(Problem("Image looks blurry", "The image looks blurry.", "Replace it with a sharper original photo."))
     return problems
 
 
@@ -99,8 +105,8 @@ def sharp_and_high_res(ctx: ReviewContext) -> CheckResult:
     for ref in refs:
         problems = _sharpness_problems(ref)
         failing += bool(problems)
-        findings += [_img_finding("7.3", ref, ev, fix, "Soft or stretched images make products look cheap and hard to judge.")
-                     for ev, fix in problems]
+        findings += [_img_finding("7.3", ref, pr, "Soft or stretched images make products look cheap and hard to judge.")
+                     for pr in problems]
     return result("7.3", share_fraction(failing, len(refs)), *findings)
 
 
@@ -116,16 +122,19 @@ def fair_image_choices(ctx: ReviewContext) -> CheckResult:
         widths = [o.media.natural_w for o in pictured if o.media.natural_w]
         problems = []
         if ratios and max(ratios) / min(ratios) > 1.05:
-            problems.append(("The images have different shapes.", "Crop every option to the same shape."))
+            problems.append(Problem("Image options have different shapes", "The images have different shapes.",
+                                    "Crop every option to the same shape."))
         if widths and max(widths) / min(widths) > 1.25:
-            problems.append(("The images are very different sizes.", "Use matching sizes so no option looks fancier."))
+            problems.append(Problem("Image options differ a lot in size", "The images are very different sizes.",
+                                    "Use matching sizes so no option looks fancier."))
         if any(not o.label.strip() for o in pictured):
-            problems.append(("Some options have no label.", "Give every image a short label."))
+            problems.append(Problem("Image option has no label", "Some options have no label.", "Give every image a short label."))
         if len(pictured) > MAX_IMAGE_CHOICES:
-            problems.append((f"{len(pictured)} image options.", f"Use {MAX_IMAGE_CHOICES} or fewer."))
+            problems.append(Problem(f"{len(pictured)} image options; use {MAX_IMAGE_CHOICES}", f"{len(pictured)} image options.",
+                                    f"Use {MAX_IMAGE_CHOICES} or fewer."))
         failing += bool(problems)
-        findings += [finding("7.5", "worth_improving", ev, fix, "Unequal images bias the result: the prettiest photo wins.",
-                             question_id=q.id) for ev, fix in problems]
+        findings += [problem_finding("7.5", pr, "Unequal images bias the result: the prettiest photo wins.",
+                                     question_id=q.id) for pr in problems]
     return result("7.5", share_fraction(failing, len(questions)), *findings)
 
 
@@ -138,16 +147,19 @@ def light_and_accessible(ctx: ReviewContext) -> CheckResult:
     for ref in refs:
         problems = []
         if (ref.media.bytes or 0) > MAX_IMAGE_BYTES:
-            problems.append((f"{ref.media.bytes // 1000} KB image.", "Compress it to under about 500 KB."))
+            problems.append(Problem(f"Image file is heavy ({ref.media.bytes // 1000} KB)", f"{ref.media.bytes // 1000} KB image.",
+                                    "Compress it to under about 500 KB."))
         if ref.media.role != "decoration" and not (ref.media.alt or "").strip():
-            problems.append(("An image has no alt text.", "Add a short description for screen readers."))
+            problems.append(Problem("Image has no alt text", "An image has no alt text.",
+                                    "Add a short description for screen readers."))
         failing += bool(problems)
-        findings += [_img_finding("7.6", ref, ev, fix, "Heavy images are slow on cellular, and members using screen readers lose context.")
-                     for ev, fix in problems]
+        findings += [_img_finding("7.6", ref, pr, "Heavy images are slow on cellular, and members using screen readers lose context.")
+                     for pr in problems]
     total_bytes = sum(r.media.bytes or 0 for r in refs)
     heavy = total_bytes > MAX_SURVEY_BYTES
     if heavy:
-        findings.append(finding("7.6", "worth_improving", f"Images total {total_bytes / 1_000_000:.1f} MB.",
+        findings.append(finding("7.6", "worth_improving", f"Images total {total_bytes / 1_000_000:.1f} MB; keep under 5",
+                                f"Images total {total_bytes / 1_000_000:.1f} MB.",
                                 "Keep the whole survey under about 5 MB of images.",
                                 "Many members are on cellular, where big surveys load slowly."))
     return result("7.6", share_fraction(failing + heavy, len(refs) + 1), *findings)
@@ -161,9 +173,11 @@ def cannot_see_image(ctx: ReviewContext) -> CheckResult:
         tiny = ref.in_image_choice and ref.media.rendered_w is not None and ref.media.rendered_w < TOO_SMALL_CSS_PX
         if broken or tiny:
             findings.append(finding(
-                "B7", "must_fix", "An image failed to load." if broken else f"An image is only {ref.media.rendered_w} px wide.",
+                "B7", "must_fix",
+                f"Image didn't load: {_label(ref)}" if broken else f"Image options are too small to judge ({ref.media.rendered_w} px)",
+                f'The image "{_label(ref)}" failed to load.' if broken else f"An image is only {ref.media.rendered_w} px wide.",
                 "Fix or replace the image so members can see what they're judging." if broken
                 else "Show the images larger, at least 2 per row, so members can judge them.",
                 "Members guess when they can't see, and the answers are meaningless.",
-                page_id=ref.page_id, question_id=ref.question_id))
+                page_id=ref.page_id, question_id=ref.question_id, element_id=ref.media.element_id or None))
     return result("B7", None, *findings) if findings else blocker_ok("B7")

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import NamedTuple
 
 from surveycoach.findings import CheckResult, Finding, Severity
 from surveycoach.rubric import Rubric
@@ -35,10 +36,27 @@ def check(criterion_id: str) -> Callable[[CheckFn], CheckFn]:
     return register
 
 
-def finding(criterion_id: str, severity: Severity, evidence: str, explanation: str, member_impact: str,
-            page_id: str | None = None, question_id: str | None = None) -> Finding:
-    return Finding(criterion_id=criterion_id, severity=severity, evidence=evidence, explanation=explanation,
-                   member_impact=member_impact, page_id=page_id, question_id=question_id)
+def finding(criterion_id: str, severity: Severity, headline: str, evidence: str, explanation: str,
+            member_impact: str, **where_and_text: str | None) -> Finding:
+    """Keyword extras: page_id, question_id, element_id, current_text, suggested_text, highlight."""
+    return Finding(criterion_id=criterion_id, severity=severity, headline=headline, evidence=evidence,
+                   explanation=explanation, member_impact=member_impact, **where_and_text)
+
+
+class Problem(NamedTuple):
+    """What a check found wrong with one thing, before it is tied to a rubric criterion and a place."""
+    headline: str
+    evidence: str
+    fix: str
+    current: str | None = None
+    suggested: str | None = None
+    highlight: str | None = None
+
+
+def problem_finding(criterion_id: str, problem: Problem, impact: str, severity: Severity = "worth_improving",
+                    **where: str | None) -> Finding:
+    return finding(criterion_id, severity, problem.headline, problem.evidence, problem.fix, impact,
+                   current_text=problem.current, suggested_text=problem.suggested, highlight=problem.highlight, **where)
 
 
 def result(criterion_id: str, fraction: float | None, *findings: Finding) -> CheckResult:

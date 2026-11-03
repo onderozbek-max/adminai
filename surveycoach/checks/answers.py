@@ -44,6 +44,17 @@ def parse_interval(label: str) -> Interval | None:
     return None
 
 
+def shorten_to_clear(earlier: str, later: str) -> str | None:
+    """The earlier range label with its top number lowered to stop just before the later range starts."""
+    a, b = BETWEEN.search(earlier), BETWEEN.search(later)
+    if not (a and b) or float(b.group(1)) != int(float(b.group(1))):
+        return None
+    new_top = int(float(b.group(1))) - 1
+    if new_top < float(a.group(1)):
+        return None
+    return earlier[:a.start(2)] + str(new_top) + earlier[a.end(2):]
+
+
 @check("4.2")
 def no_overlap(ctx: ReviewContext) -> CheckResult:
     findings = []
@@ -55,9 +66,11 @@ def no_overlap(ctx: ReviewContext) -> CheckResult:
             for b in intervals[a_index + 1:]:
                 if a.overlaps(b):
                     findings.append(finding(
-                        "4.2", "worth_improving", f'"{a.label}" and "{b.label}" overlap.',
+                        "4.2", "worth_improving", f"Answer ranges overlap: {a.label}, {b.label}",
+                        f'"{a.label}" and "{b.label}" overlap.',
                         "Make the ranges share no numbers, for example 1 to 4 and 5 to 10.",
-                        "A member at the shared number can't tell which answer is theirs.", question_id=q.id))
+                        "A member at the shared number can't tell which answer is theirs.", question_id=q.id,
+                        current_text=a.label, suggested_text=shorten_to_clear(a.label, b.label), highlight=a.label))
     return result("4.2", 0.0 if findings else 1.0, *findings[:3])
 
 
@@ -77,17 +90,49 @@ def polarity(label: str | None) -> int:
     return 1 if POSITIVE.search(label) else 0
 
 
-def _scale_problems(q: Question) -> list[str]:
+OPPOSITES = (
+    (re.compile(r"^not at all (\w+)$", re.I), r"Extremely \1"),
+    (re.compile(r"^strongly disagree$", re.I), "Strongly agree"),
+    (re.compile(r"^very (?:dis|un)satisfied$", re.I), "Very satisfied"),
+    (re.compile(r"^very unlikely$", re.I), "Very likely"),
+    (re.compile(r"^very poor$", re.I), "Very good"),
+)
+
+
+def opposite_label(label: str) -> str | None:
+    for pattern, replacement in OPPOSITES:
+        if pattern.match(label.strip()):
+            return pattern.sub(replacement, label.strip())
+    return None
+
+
+@dataclass(frozen=True)
+class ScaleProblem:
+    headline: str
+    fix: str
+    current: str | None = None
+    suggested: str | None = None
+
+
+def _scale_problems(q: Question) -> list[ScaleProblem]:
     s = q.scale
     problems = []
     if s is None:
         return problems
     if not (s.low_label and s.high_label):
-        problems.append("Both ends of the scale should be labeled so every member reads it the same way.")
+        missing = "no labels on its ends" if not (s.low_label or s.high_label) else "no label on one end"
+        end_text = f"{s.low_label or '(no label)'} ... {s.high_label or '(no label)'}"
+        added = opposite_label(s.low_label) if s.low_label and not s.high_label else None
+        problems.append(ScaleProblem(
+            f"Scale has {missing}",
+            "Both ends of the scale should be labeled so every member reads it the same way.",
+            end_text, f"{s.low_label} ... {added}" if added else None))
     if len(s.labels) >= 3:
         signs = [polarity(label) for label in s.labels]
         if abs(signs.count(1) - signs.count(-1)) > 1:
-            problems.append("Keep the scale balanced: as many positive answers as negative ones.")
+            problems.append(ScaleProblem("Scale is lopsided",
+                                         "Keep the scale balanced: as many positive answers as negative ones.",
+                                         " / ".join(s.labels)))
     return problems
 
 
@@ -102,12 +147,14 @@ def honest_scales(ctx: ReviewContext) -> CheckResult:
     findings = []
     for q in scaled:
         for problem in _scale_problems(q):
-            findings.append(finding("4.4", "worth_improving", clip(q.text), problem,
-                                    "Unlabeled or lopsided scales push members toward certain answers.", question_id=q.id))
+            findings.append(finding("4.4", "worth_improving", problem.headline, clip(q.text), problem.fix,
+                                    "Unlabeled or lopsided scales push members toward certain answers.",
+                                    question_id=q.id, current_text=problem.current, suggested_text=problem.suggested))
     directions = {o for q in scaled if (o := _orientation(q))}
     if len(directions) > 1:
         findings.append(finding(
-            "4.4", "worth_improving", "Some scales run from positive to negative, others the other way round.",
+            "4.4", "worth_improving", "Scales run in opposite directions",
+            "Some scales run from positive to negative, others the other way round.",
             "Use the same direction throughout, so the highest number always means best (the direction rule).",
             "Members on autopilot tap the wrong end when the direction flips."))
     if not scaled:
@@ -128,17 +175,18 @@ def is_agree_scale(q: Question) -> bool:
 
 @check("5.4")
 def agree_wall(ctx: ReviewContext) -> CheckResult:
-    longest, run_start, current = 0, None, 0
+    longest, longest_start, run_start, current = 0, None, None, 0
     for q in ctx.snapshot.all_questions():
         if is_agree_scale(q):
             current += 1
             run_start = run_start or q.id
-            longest = max(longest, current)
+            if current > longest:
+                longest, longest_start = current, run_start
         else:
             current, run_start = 0, None
     if longest <= 3:
         return passed("5.4")
     return result("5.4", 0.0, finding(
-        "5.4", "worth_improving", f"{longest} agree/disagree questions in a row.",
+        "5.4", "worth_improving", f"{longest} agree/disagree questions in a row", f"{longest} agree/disagree questions in a row.",
         'Ask direct questions instead, for example "How easy was the package to open?"',
-        "Long runs of agree/disagree make members default to agreeing."))
+        "Long runs of agree/disagree make members default to agreeing.", question_id=longest_start))

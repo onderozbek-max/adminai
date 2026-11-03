@@ -13,7 +13,7 @@ def full_marks() -> dict[str, CheckResult]:
 
 
 def must_fix(blocker_id: str) -> Finding:
-    return Finding(criterion_id=blocker_id, severity="must_fix", evidence="x", explanation="y", member_impact="z")
+    return Finding(criterion_id=blocker_id, severity="must_fix", headline="h", evidence="x", explanation="y", member_impact="z")
 
 
 def test_all_full_marks_is_100_and_ready():
@@ -90,7 +90,7 @@ def test_strengths_are_the_three_heaviest_full_credit_criteria():
 
 
 def test_fingerprint_is_stable_and_ignores_whitespace_and_case():
-    a = Finding(criterion_id="6.2", severity="worth_improving", question_id="q1", evidence="Too  LONG",
+    a = Finding(criterion_id="6.2", severity="worth_improving", headline="h", question_id="q1", evidence="Too  LONG",
                 explanation="e", member_impact="m")
     b = a.model_copy(update={"evidence": "too long"})
     assert a.fingerprint == b.fingerprint
