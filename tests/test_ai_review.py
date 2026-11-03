@@ -116,3 +116,19 @@ def test_the_cli_names_what_the_ai_could_not_check(monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "could not check: Wording and answer choices, Intro, voice and thank-you, Order and relevance" in out
     assert "Wibey timed out after 180 s" in out and "Readiness: Needs work" in out
+
+
+def test_the_judge_is_told_what_the_code_checks_already_found(flawed):
+    fake = clear_provider()
+    run_review(flawed, provider=fake)
+    data = fake.calls[0][1]
+    assert "ALREADY FOUND BY CODE" in data and "Emoji in a question" in data and "Answer ranges overlap" in data
+
+
+def test_the_cli_lists_the_claims_it_refused_so_nothing_is_hidden(monkeypatch, capsys):
+    invented = AiFinding(criterion_id="5.1", page_id="p4", question_id="q4", headline="h", evidence="a sentence nobody wrote",
+                         explanation="x", member_impact="m")
+    monkeypatch.setattr(cli, "WibeyProvider", lambda: clear_provider([invented]))
+    cli.main(["review", str(ROOT / "fixtures" / "boxer-briefs.json"), "--ai"])
+    out = capsys.readouterr().out
+    assert "ignored 1 claims the survey did not back up" in out and "wording: 5.1: the quote was not found" in out

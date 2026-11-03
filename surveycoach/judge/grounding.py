@@ -17,6 +17,7 @@ from surveycoach.snapshot import Page, Question, SurveySnapshot
 
 CREDIT_CAP_WITH_FINDING = 0.75   # one real problem can never score as full marks
 MAX_OPTIONS = 3
+MAX_FINDINGS_PER_CRITERION = 3   # a pattern is one finding on its worst example, not a wall of cards
 
 
 @dataclass
@@ -99,6 +100,8 @@ def ground(output: BatchOutput, batch: Batch, snapshot: SurveySnapshot, rubric: 
         finding, why = _ground_one(raw, batch, raised, snapshot)
         if finding is None:
             grounded.dropped.append(why)
+        elif len(kept[raw.criterion_id]) >= MAX_FINDINGS_PER_CRITERION:
+            grounded.dropped.append(f"{raw.criterion_id}: too many findings, kept the first {MAX_FINDINGS_PER_CRITERION}")
         else:
             kept[raw.criterion_id].append(finding)
     for verdict in output.verdicts:

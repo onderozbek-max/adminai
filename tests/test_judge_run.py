@@ -132,3 +132,15 @@ def test_a_corrupt_cache_file_is_a_miss_not_a_crash(tmp_path):
 def test_the_default_cache_folder_follows_surveycoach_home(tmp_path, monkeypatch):
     monkeypatch.setenv("SURVEYCOACH_HOME", str(tmp_path))
     assert JudgeCache().root == tmp_path / "cache"
+
+
+def test_known_findings_reach_every_batch_prompt_and_change_the_cache_key(tmp_path):
+    from surveycoach.findings import Finding
+    known = [Finding(criterion_id="4.2", severity="worth_improving", headline="Answer ranges overlap", evidence="1 to 5",
+                     explanation="x", member_impact="m", question_id="q1")]
+    fake = provider()
+    run_judge(snapshot(), RUBRIC, fake, known=known)
+    assert all("4.2 [q1] Answer ranges overlap" in data for _, data, _ in fake.calls)
+    cache = JudgeCache(tmp_path)
+    assert cache.key(snapshot(), RUBRIC, BATCHES[0], known) != cache.key(snapshot(), RUBRIC, BATCHES[0])
+    assert cache.key(snapshot(), RUBRIC, BATCHES[0], known) == cache.key(snapshot(), RUBRIC, BATCHES[0], list(reversed(known)))

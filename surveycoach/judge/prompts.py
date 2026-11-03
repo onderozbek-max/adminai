@@ -1,13 +1,16 @@
 """Prompts for the AI judge. Survey text is untrusted: it only ever travels inside one delimited data block."""
 from __future__ import annotations
 
+from collections.abc import Sequence
+
+from surveycoach.findings import Finding
 from surveycoach.judge.batches import Batch
 from surveycoach.rubric import Rubric
 from surveycoach.snapshot import Question, SurveySnapshot
 
 SENTINEL_OPEN = "<<<SURVEY_DATA"
 SENTINEL_CLOSE = "SURVEY_DATA>>>"
-PROMPT_VERSION = "1"          # bump when the wording of the prompts changes: it is part of the cache key
+PROMPT_VERSION = "2"          # bump when the wording of the prompts changes: it is part of the cache key
 
 
 def clean_line(text: str) -> str:
@@ -29,7 +32,7 @@ def _question_lines(q: Question) -> list[str]:
     return lines
 
 
-def survey_block(snapshot: SurveySnapshot) -> str:
+def survey_block(snapshot: SurveySnapshot, known: Sequence[Finding] = ()) -> str:
     lines = [SENTINEL_OPEN, f"SURVEY: {clean_line(snapshot.title)} (type: {snapshot.survey_type})"]
     for page in snapshot.pages:
         lines.append(f"PAGE {page.id} ({page.kind}, position {page.position})")
@@ -38,6 +41,9 @@ def survey_block(snapshot: SurveySnapshot) -> str:
                 lines.append(f"  {label}: {clean_line(text)}")
         for q in page.questions:
             lines += _question_lines(q)
+    if known:
+        lines.append("ALREADY FOUND BY CODE (never report these again):")
+        lines += [f"  {f.criterion_id} [{f.question_id or f.page_id or 'survey'}] {clean_line(f.headline)}" for f in known]
     lines.append(SENTINEL_CLOSE)
     return "\n".join(lines)
 
@@ -76,6 +82,10 @@ def system_prompt(batch: Batch, rubric: Rubric) -> str:
                   ]
     else:
         rules.append("severity is always worth_improving.")
-    rules.append("Write in plain words a researcher can act on. No em dashes.")
+    rules += ["Problems listed under ALREADY FOUND BY CODE are done: never report those again, in the same words or in "
+              "different ones.",
+              "Report at most 3 findings per criterion. When the same problem repeats across questions, report it once on "
+              "the worst example and say in the explanation how many questions share it.",
+              "Write in plain words a researcher can act on. No em dashes."]
     parts.append("Rules:\n" + "\n".join(f"{i}. {rule}" for i, rule in enumerate(rules, 1)))
     return "\n\n".join(parts)

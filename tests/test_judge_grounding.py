@@ -141,3 +141,10 @@ def test_a_triggered_blocker_that_cannot_be_quoted_is_not_raised_and_says_why():
 def test_a_finding_for_a_blocker_that_was_not_triggered_is_dropped():
     grounded = run(output([finding(criterion_id="B1")], blockers=[BlockerCall(blocker_id="B1", triggered=False)]))
     assert grounded.results["B1"].findings == []
+
+
+def test_no_criterion_gets_more_than_three_findings_and_the_rest_are_reported_as_dropped():
+    many = [finding(evidence="LOVE the amazing softness", headline=f"Problem {i}") for i in range(5)]
+    grounded = run(output(many, fraction=0.5, only="5.1"))
+    assert [f.headline for f in grounded.results["5.1"].findings] == ["Problem 0", "Problem 1", "Problem 2"]
+    assert len([n for n in grounded.dropped if "too many" in n]) == 2

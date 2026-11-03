@@ -61,7 +61,8 @@ def run_review(snapshot: SurveySnapshot, rubric: Rubric | None = None, kept_bloc
     results = run_all(context)
     ai: AiRunInfo | None = None
     if provider is not None:
-        ai_results, ai = run_judge(snapshot, rubric, provider, cache)
+        known = [f for r in results.values() for f in r.findings]
+        ai_results, ai = run_judge(snapshot, rubric, provider, cache, known=known)
         results = _with_ai(results, ai_results)
     unchecked = [c.title for c in rubric.criteria if c.active
                  and ((r := results.get(c.id)) is None or (r.applies and r.fraction is None))]

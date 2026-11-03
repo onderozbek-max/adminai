@@ -1,11 +1,12 @@
 """Run the AI judge: batches in parallel, cached, grounded, and honest about anything it could not check."""
 from __future__ import annotations
 
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 
 from pydantic import BaseModel, Field
 
-from surveycoach.findings import CheckResult
+from surveycoach.findings import CheckResult, Finding
 from surveycoach.judge.batches import BATCHES, Batch
 from surveycoach.judge.cache import JudgeCache
 from surveycoach.judge.grounding import ground
@@ -27,13 +28,13 @@ class AiRunInfo(BaseModel):
 
 
 def _answer(batch: Batch, snapshot: SurveySnapshot, rubric: Rubric, provider: LlmProvider,
-            cache: JudgeCache | None) -> tuple[BatchOutput | None, bool, str]:
+            cache: JudgeCache | None, known: Sequence[Finding]) -> tuple[BatchOutput | None, bool, str]:
     """(output, came_from_cache, failure reason). Failures are returned, never raised: one batch must not sink the rest."""
-    key = cache.key(snapshot, rubric, batch) if cache else None
+    key = cache.key(snapshot, rubric, batch, known) if cache else None
     if cache and (hit := cache.get(key)) is not None:
         return hit, True, ""
     try:
-        output = provider.complete_json(system_prompt(batch, rubric), survey_block(snapshot), BatchOutput)
+        output = provider.complete_json(system_prompt(batch, rubric), survey_block(snapshot, known), BatchOutput)
     except LlmError as error:
         return None, False, str(error)
     if cache:
@@ -42,11 +43,12 @@ def _answer(batch: Batch, snapshot: SurveySnapshot, rubric: Rubric, provider: Ll
 
 
 def run_judge(snapshot: SurveySnapshot, rubric: Rubric, provider: LlmProvider, cache: JudgeCache | None = None,
-              workers: int = 3) -> tuple[dict[str, CheckResult], AiRunInfo]:
+              workers: int = 3, known: Sequence[Finding] = ()) -> tuple[dict[str, CheckResult], AiRunInfo]:
+    """`known` are the problems code already found: the judge is told to skip them."""
     info = AiRunInfo(model=ASSESSMENT_MODEL)
     results: dict[str, CheckResult] = {}
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = [(batch, pool.submit(_answer, batch, snapshot, rubric, provider, cache)) for batch in BATCHES]
+        futures = [(batch, pool.submit(_answer, batch, snapshot, rubric, provider, cache, known)) for batch in BATCHES]
         for batch, future in futures:                      # collected in rubric order, so output is deterministic
             output, cached, failure = future.result()
             if output is None:
