@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 
 from surveycoach.judge import JudgeCache
+from surveycoach.judge.batches import BATCHES
 from surveycoach.llm import LlmError, WibeyProvider
 from surveycoach.review import run_review
 from surveycoach.rubric import load_rubric
@@ -53,6 +54,7 @@ def build_demo_data(provider=None) -> dict:
         "disclaimer": DISCLAIMER, "disclaimer_short": DISCLAIMER_SHORT,
         "surveys": [_survey(sample_id, blurb, provider) for sample_id, blurb in SAMPLES],
         "dimensions": {d.id: d.name for d in rubric.dimensions},
+        "ai_batches": {b.id: b.title for b in BATCHES},
         "criteria": {**{c.id: {"title": c.title, "dimension": c.dimension, "points": c.points} for c in rubric.criteria},
                      **{b.id: {"title": b.title, "dimension": "blocker", "points": 0} for b in rubric.blockers}},
     }

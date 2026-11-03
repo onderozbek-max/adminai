@@ -1623,6 +1623,11 @@ window.SURVEYCOACH_DEMO = {
   "D9": "Community voice and tone",
   "D10": "Closing the loop"
  },
+ "ai_batches": {
+  "wording": "Wording and answer choices",
+  "story": "Intro, voice and thank-you",
+  "flow": "Order and relevance"
+ },
  "criteria": {
   "1.1": {
    "title": "Inviting, specific title in sentence case",

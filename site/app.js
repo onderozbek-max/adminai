@@ -10,17 +10,17 @@
   const survey = () => DATA.surveys[state.survey];
   const current = () => model.order[state.screen];
   const pageItem = () => (current().page ? current() : model.items[0]);
-  const choiceOf = (key) => state.choices[`${state.survey}:${key}`] || "suggested";
-  const applied = (entry) => state.mode === "fixes" && !!entry.f.suggested_text && choiceOf(entry.key) === "suggested";
+  const choiceOf = (key) => state.choices[`${state.survey}:${key}`];
+  /** The version picked for a finding, or null for "keep my original". Bundles of answer choices are never previewed. */
+  const chosen = (f, key) => (f.structural ? null : SC.chosenChoice(f, choiceOf(key)));
 
-  /** current text -> chosen suggestion, so the phone can show the survey as it would read after the fixes. */
-  function fixMap() {
+  /** The fixes to show on the phone, in finding order. Where two fixes want the same words, the first one wins. */
+  function previewPlan() {
     if (state.mode !== "fixes") return null;
-    const map = {};
-    survey().review.findings.forEach((f, key) => {
-      if (f.current_text && f.suggested_text && choiceOf(key) === "suggested") map[f.current_text] = f.suggested_text;
+    return survey().review.findings.flatMap((f, key) => {
+      const pick = f.current_text && chosen(f, key);
+      return pick ? [{ key, from: f.current_text, to: pick.text }] : [];
     });
-    return map;
   }
 
   async function copy(text, msg) {
@@ -57,13 +57,20 @@
     renderAll();
   }
 
-  const context = () => ({
-    data: DATA, review: survey().review, selected: state.selected, device: state.device, large: state.large,
-    total: model.items.length, fixes: fixMap(), applied, choiceOf,
-    onPin: (key) => select(key, true), onSelect: (key) => select(key, false),
-    onChoose: (key, value) => { state.choices[`${state.survey}:${key}`] = value; renderAll(); },
-    onCopy: copy,
-  });
+  /** One render's view of the world. "Applied" means the phone really changed: the same function decides both. */
+  function context() {
+    const plan = previewPlan(), hits = plan ? SC.hitsOn(pageItem().page, plan) : new Set();
+    const picked = (entry) => state.mode === "fixes" && !!chosen(entry.f, entry.key);
+    const applied = (entry) => picked(entry) && (entry.f.current_text ? hits.has(entry.key) : true);
+    const blocked = (entry) => picked(entry) && !!entry.f.current_text && !hits.has(entry.key);
+    return {
+      data: DATA, review: survey().review, selected: state.selected, device: state.device, large: state.large,
+      total: model.items.length, plan, applied, blocked, choiceOf,
+      onPin: (key) => select(key, true), onSelect: (key) => select(key, false),
+      onChoose: (key, value) => { state.choices[`${state.survey}:${key}`] = value; renderAll(); },
+      onCopy: copy,
+    };
+  }
 
   /* ---------- header ---------- */
   const stat = (value, label, tone) => h("div", { class: `stat ${tone}` }, h("dd", null, String(value)), h("dt", null, label));
@@ -72,8 +79,9 @@
     const { readiness, open_blockers } = review.scorecard;
     const must = review.findings.filter((f) => f.severity === "must_fix").length, worth = review.findings.length - must;
     if (readiness === "needs_work") return `Needs work. Fix ${plural(open_blockers.length || must, "thing")} first.`;
-    if (readiness === "ready") return "Ready to launch.";
-    return worth ? `Almost ready. ${plural(worth, "improvement")} to consider.` : "Nothing to fix yet. The AI step still has to run.";
+    if (readiness === "ready") return review.unchecked.length ? `Ready to launch, but ${plural(review.unchecked.length, "check")} have not run.` : "Ready to launch.";
+    if (worth) return `Almost ready. ${plural(worth, "improvement")} to consider.`;
+    return review.ai && !Object.keys(review.ai.failed).length ? "Nothing to fix." : "Nothing to fix yet. The AI step still has to run.";
   }
 
   function renderTop() {
@@ -81,7 +89,13 @@
     const checked = 100 - card.unchecked_points, earned = card.score - card.unchecked_points;
     const must = review.findings.filter((f) => f.severity === "must_fix").length, worth = review.findings.length - must;
     const promised = review.promised_minutes ? `intro promises ${review.promised_minutes}` : "";
-    const waiting = `${card.unchecked_points} points${card.pending_blockers.length ? ` and ${plural(card.pending_blockers.length, "launch check")}` : ""} wait on the AI step`;
+    const ai = review.ai, failed = ai ? Object.keys(ai.failed) : [];
+    const waiting = !ai
+      ? `${card.unchecked_points} points${card.pending_blockers.length ? ` and ${plural(card.pending_blockers.length, "launch check")}` : ""} wait on the AI step`
+      : [`AI checked ${ai.checked.length} of ${ai.checked.length + failed.length} parts`,
+        failed.length && `could not check ${failed.map((id) => DATA.ai_batches[id]).join(", ")}`,
+        card.unchecked_points && `${card.unchecked_points} points still unchecked`].filter(Boolean).join("; ");
+    const aiBrief = !ai ? "AI check pending" : failed.length ? "AI partly checked" : "AI checked";
     // The ring shows all 100 points: earned, lost, and not checked yet. Unchecked points are never drawn as earned.
     mount($("topbar"),
       h("div", { class: "brand" }, "Survey", h("span", null, "Coach")),
@@ -93,7 +107,7 @@
       h("div", { class: "head-text" },
         h("h1", null, headline(review)),
         h("p", { class: "sub" }, `${survey().title} \u2022 ${waiting}`),
-        h("p", { class: "brief" }, `${must} must fix \u2022 ${worth} worth improving \u2022 ${review.est_minutes} min \u2022 AI check pending`)),
+        h("p", { class: "brief" }, `${must} must fix \u2022 ${worth} worth improving \u2022 ${review.est_minutes} min \u2022 ${aiBrief}`)),
       h("dl", { class: "stats" }, stat(must, "must fix", "red"), stat(worth, "worth improving", "amber"),
         stat(`${review.est_minutes} min`, promised ? `for members, ${promised}` : "for members", "plain")),
       h("label", { class: "pick" }, h("span", null, "Sample survey"),

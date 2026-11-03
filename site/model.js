@@ -2,6 +2,38 @@
   "use strict";
   const SC = window.SC;
   const RANK = { must_fix: 0, worth_improving: 1 };
+  SC.SPLIT = " ... ";   // joins a scale's two end labels into one fixable string
+
+  /** The versions a researcher can pick between: the AI's options, or the single code-made suggestion. */
+  SC.choicesOf = (f) => (f.options && f.options.length
+    ? f.options.map((o, i) => ({ value: String(i), label: o.label, text: o.text }))
+    : f.suggested_text ? [{ value: "suggested", label: "Suggested", text: f.suggested_text }] : []);
+
+  /** null means "keep the original". With no pick yet, the first (recommended) version is chosen. */
+  SC.chosenChoice = (f, value) => {
+    if (value === "original") return null;
+    const list = SC.choicesOf(f);
+    return list.find((c) => c.value === value) || list[0] || null;
+  };
+
+  /** Apply the chosen fixes to one string, first fix wins. `hits` collects the fixes that really changed something. */
+  SC.applyFixes = (text, plan, hits) => plan.reduce((t, fix) => {
+    if (!t.includes(fix.from)) return t;
+    if (hits) hits.add(fix.key);
+    return t.replace(fix.from, fix.to);
+  }, text);
+
+  /** Every string the phone shows through the fixer for this page, so "fixed in preview" can be checked, not assumed. */
+  SC.pageTexts = (page) => [page.intro_text, page.text, ...(page.questions || []).flatMap((q) => [
+    q.text, q.help_text, ...q.options.map((o) => o.label),
+    q.scale && `${q.scale.low_label || "(no label)"}${SC.SPLIT}${q.scale.high_label || "(no label)"}`]),
+  ].filter(Boolean);
+
+  SC.hitsOn = (page, plan) => {
+    const hits = new Set();
+    SC.pageTexts(page).forEach((text) => SC.applyFixes(text, plan, hits));
+    return hits;
+  };
 
   /** Which findings belong to which screen, numbered the way the phone pins and the coach cards will show them. */
   SC.buildModel = function buildModel(survey) {

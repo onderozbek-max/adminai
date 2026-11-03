@@ -2,11 +2,10 @@
   "use strict";
   const SC = window.SC;
   const { h } = SC;
-  const SPLIT = " ... ";
   const KIND = { intro: "Welcome", question: "Question", thank_you: "Thank you", screen_out: "Screen-out" };
   const SCALE_CRITERIA = ["4.4", "6.3"];
 
-  const fixedText = (text, ctx) => (ctx.fixes && Object.hasOwn(ctx.fixes, text) ? ctx.fixes[text] : text);
+  const fixedText = (text, ctx) => (ctx.plan ? SC.applyFixes(text, ctx.plan) : text);
   const scalePoints = (scale) => Array.from({ length: scale.points }, (_, i) => (scale.points === 11 ? i : i + 1));
   const ratio = (m) => (m.natural_w && m.natural_h ? `${m.natural_w} / ${m.natural_h}` : "1 / 1");
 
@@ -67,7 +66,7 @@
   }
 
   function scaleEnds(scale, ctx) {
-    const [low, high] = fixedText(`${scale.low_label || "(no label)"}${SPLIT}${scale.high_label || "(no label)"}`, ctx).split(SPLIT);
+    const [low, high] = fixedText(`${scale.low_label || "(no label)"}${SC.SPLIT}${scale.high_label || "(no label)"}`, ctx).split(SC.SPLIT);
     return h("div", { class: "ends" }, h("span", null, low), h("span", null, high));
   }
 
@@ -100,7 +99,7 @@
 
   /** Page-level issues on a question screen: a suggested new question once fixed, otherwise a labeled pin. */
   function pageNotes(own, ctx) {
-    return own.map((e) => (ctx.applied(e) && !e.f.current_text && e.f.suggested_text
+    return own.map((e) => (ctx.applied(e) && !e.f.current_text && e.f.suggested_text && e.f.source !== "ai"
       ? h("div", { class: "q added" }, h("p", { class: "tag-new" }, "New question (suggested)"),
         h("p", { class: "q-text" }, e.f.suggested_text), h("div", { class: "textbox" }, "Type your answer here"))
       : h("p", { class: "page-note" }, pin(e, ctx), " ", e.f.headline)));

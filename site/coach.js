@@ -9,7 +9,9 @@
     return h("div", { class: "chips" },
       h("span", { class: "badge-n" }, String(n)),
       h("span", { class: `chip ${f.severity}` }, SC.SEVERITY[f.severity]),
+      f.source === "ai" && h("span", { class: "chip ai" }, "AI"),
       area && h("span", { class: "chip area" }, area),
+      f.structural && h("span", { class: "chip" }, "Not previewed"),
       ctx.applied(entry) && h("span", { class: "chip good" }, "Fixed in preview"));
   }
 
@@ -28,19 +30,30 @@
 
   /** "Which version is better?": the researcher's pick drives the phone preview and what gets copied. */
   function choiceBlock(entry, ctx) {
-    const { f, key, n } = entry, picked = ctx.choiceOf(key), msg = h("p", { class: "note", role: "status" });
-    const d = f.current_text ? diffParts(f.current_text, f.suggested_text) : null;
-    const radio = (value, label, text) => h("label", { class: `opt${picked === value ? " on" : ""}` },
+    const { f, key, n } = entry, choices = SC.choicesOf(f), picked = ctx.choiceOf(key) || choices[0].value;
+    const chosen = SC.chosenChoice(f, picked) || choices[0], msg = h("p", { class: "note", role: "status" });
+    const markable = f.current_text && !f.structural;     // a bundle of answer choices is shown whole, not word-diffed
+    const radio = (value, label, body) => h("label", { class: `opt${picked === value ? " on" : ""}` },
       h("input", { type: "radio", name: `choice-${key}`, value, checked: picked === value, "data-fk": `opt-${key}-${value}`, onchange: () => ctx.onChoose(key, value) }),
-      h("span", { class: "opt-body" }, h("span", { class: "opt-label" }, label), h("span", { class: "opt-text" }, text)));
-    return h("fieldset", { class: "choice" },
+      h("span", { class: "opt-body" }, h("span", { class: "opt-label" }, label), h("span", { class: "opt-text" }, body)));
+    const alone = choices.length === 1 && markable ? diffParts(f.current_text, choices[0].text) : null;
+    const original = alone ? spaced(alone.head, alone.cut && h("del", null, alone.cut), alone.tail) : f.current_text || "Nothing added";
+    const version = (c) => {
+      if (!markable) return c.text;
+      const d = diffParts(f.current_text, c.text);
+      return spaced(d.head, d.add && h("ins", null, d.add), d.tail);
+    };
+    const note = f.structural ? "This changes answer choices, so it is not drawn on the phone. Copy it and paste it into RedJade yourself."
+      : picked === "original" ? "Your original stays in the preview."
+        : ctx.blocked(entry) ? "Another fix already changes this text in the preview, so this one is not shown."
+          : "Shown on the phone under With fixes.";
+    return h("fieldset", { class: `choice${f.structural ? " pre" : ""}` },
       h("legend", null, "Which version is better?"),
-      radio("original", f.current_text ? "Your original" : "Leave as is",
-        d ? spaced(d.head, d.cut && h("del", null, d.cut), d.tail) : "Nothing added"),
-      radio("suggested", "Suggested", d ? spaced(d.head, d.add && h("ins", null, d.add), d.tail) : f.suggested_text),
+      radio("original", f.current_text ? "Your original" : "Leave as is", original),
+      choices.map((c) => radio(c.value, c.label, version(c))),
       h("div", { class: "actions" },
-        h("button", { type: "button", class: "btn", "data-fk": `copy-${key}`, "aria-label": `Copy suggested text for issue ${n}`, onclick: () => ctx.onCopy(f.suggested_text, msg) }, "Copy suggested text"),
-        h("span", { class: "note" }, picked === "suggested" ? "Shown on the phone under With fixes." : "Your original stays in the preview.")),
+        h("button", { type: "button", class: "btn", "data-fk": `copy-${key}`, "aria-label": `Copy suggested text for issue ${n}`, onclick: () => ctx.onCopy(chosen.text, msg) }, "Copy suggested text"),
+        h("span", { class: "note" }, note)),
       msg);
   }
 
@@ -51,7 +64,7 @@
       h("h3", null, h("button", { type: "button", class: "card-head", "data-fk": `card-${key}`, "aria-pressed": String(selected), onclick: () => ctx.onSelect(key) }, f.headline)),
       h("p", { class: "why" }, f.member_impact),
       h("p", { class: "fix" }, h("strong", null, "How to fix: "), f.explanation),
-      f.suggested_text ? choiceBlock(entry, ctx) : null);
+      SC.choicesOf(f).length ? choiceBlock(entry, ctx) : null);
   }
 
   function areaRow(id, d, ctx) {
@@ -65,15 +78,28 @@
       h("span", { class: "num" }, checked ? `${earned.toFixed(1)} of ${checked} checked` : "Not checked yet", unchecked && checked ? `, ${unchecked} waiting` : ""));
   }
 
+  /** What the AI step did and did not do, in plain words, so nothing unchecked reads as checked. */
+  function aiDetails(ctx) {
+    const ai = ctx.review.ai, titles = ctx.data.ai_batches, failed = Object.entries(ai.failed);
+    return h("details", null, h("summary", null, "About the AI check"),
+      h("ul", { class: "plain" },
+        h("li", null, `Judge: ${ai.model}, the same model for every review, so scores stay comparable.`),
+        h("li", null, `Checked ${ai.checked.length} of ${ai.checked.length + failed.length} parts: ${ai.checked.map((id) => titles[id]).join(", ") || "none"}.`),
+        failed.map(([id, why]) => h("li", null, `Could not check ${titles[id]}: ${why}`)),
+        h("li", null, ai.dropped.length ? `Ignored ${plural(ai.dropped.length, "claim")} the survey did not back up.` : "Every AI finding quotes the survey word for word. None had to be discarded."),
+        h("li", null, "AI findings are marked AI. You decide what to change; nothing is edited in RedJade for you.")));
+  }
+
   function report(ctx) {
-    const { scorecard, unchecked } = ctx.review;
+    const { scorecard, unchecked, ai } = ctx.review;
     return h("section", { class: "report", "aria-labelledby": "report-h" },
       h("h2", { id: "report-h" }, "Report"),
       h("details", null, h("summary", null, "Score by area"),
         h("ul", { class: "areas" }, Object.entries(scorecard.by_dimension).map(([id, d]) => areaRow(id, d, ctx))),
         h("p", { class: "legend" }, h("i", { class: "got" }), " earned ", h("i", { class: "lost" }), " lost ", h("i", { class: "wait" }), " not checked yet")),
-      h("details", null, h("summary", null, `Waiting on the AI step (${plural(unchecked.length, "check")})`),
-        h("ul", { class: "plain" }, unchecked.map((title) => h("li", null, title)))),
+      ai ? aiDetails(ctx) : null,
+      unchecked.length ? h("details", null, h("summary", null, ai ? `Not checked yet (${plural(unchecked.length, "check")})` : `Waiting on the AI step (${plural(unchecked.length, "check")})`),
+        h("ul", { class: "plain" }, unchecked.map((title) => h("li", null, title)))) : null,
       h("details", null, h("summary", null, "What is working"),
         h("ul", { class: "plain" }, (scorecard.strengths.length ? scorecard.strengths : ["Nothing confirmed yet."]).map((s) => h("li", null, s)))));
   }
@@ -82,7 +108,8 @@
     const n = item.entries.length;
     const sub = n
       ? `${plural(n, "thing")} to look at ${item.page ? "on this screen" : "across the whole survey"}.`
-      : "No issues found here. The AI step has not run yet, so tone and leading wording are not checked.";
+      : ctx.review.ai ? "Nothing flagged on this screen."
+        : "No issues found here. The AI step has not run yet, so tone and leading wording are not checked.";
     return [h("h2", { id: "coach-h" }, "Coach"), h("p", { class: "sub" }, sub), item.entries.map((e) => card(e, ctx)), report(ctx)];
   };
 })();
