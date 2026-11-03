@@ -429,7 +429,8 @@ window.SURVEYCOACH_DEMO = {
      "Impact reminder"
     ],
     "est_minutes": 4.3,
-    "promised_minutes": 3.0
+    "promised_minutes": 3.0,
+    "ai": null
    },
    "timeline": [
     {
@@ -907,7 +908,8 @@ window.SURVEYCOACH_DEMO = {
      "Impact reminder"
     ],
     "est_minutes": 1.6,
-    "promised_minutes": 2.0
+    "promised_minutes": 2.0,
+    "ai": null
    },
    "timeline": [
     {

@@ -6,6 +6,9 @@ from pydantic import BaseModel
 from surveycoach.checks import run_all
 from surveycoach.checks.registry import ReviewContext
 from surveycoach.findings import CheckResult, Finding
+from surveycoach.judge import AiRunInfo, JudgeCache, run_judge
+from surveycoach.judge.grounding import CREDIT_CAP_WITH_FINDING
+from surveycoach.llm import LlmProvider
 from surveycoach.rubric import Rubric, load_rubric
 from surveycoach.scoring import ScoreCard, score
 from surveycoach.snapshot import SurveySnapshot
@@ -23,6 +26,7 @@ class Review(BaseModel):
     promised_minutes: float | None
     timing: Timing
     results: dict[str, CheckResult]
+    ai: AiRunInfo | None = None     # None means the AI step did not run at all
 
 
 def _merge(results: dict[str, CheckResult], rubric: Rubric) -> list[Finding]:
@@ -35,15 +39,34 @@ def _merge(results: dict[str, CheckResult], rubric: Rubric) -> list[Finding]:
     return sorted(unique.values(), key=lambda f: (f.severity != "must_fix", order.get(f.criterion_id, 999)))
 
 
-def run_review(snapshot: SurveySnapshot, rubric: Rubric | None = None,
-               kept_blockers: frozenset[str] = frozenset()) -> Review:
+def _with_ai(code: dict[str, CheckResult], ai: dict[str, CheckResult]) -> dict[str, CheckResult]:
+    """Code wins wherever it judged. Where code left a criterion open (fraction None, for example 9.1 where code only
+    checks emoji), the AI supplies the verdict and the code's own findings are kept next to the AI's."""
+    merged = dict(code)
+    for cid, theirs in ai.items():
+        mine = code.get(cid)
+        if mine is None:
+            merged[cid] = theirs
+        elif mine.fraction is None and theirs.fraction is not None:
+            findings = [*mine.findings, *theirs.findings]
+            fraction = min(theirs.fraction, CREDIT_CAP_WITH_FINDING) if findings else theirs.fraction
+            merged[cid] = CheckResult(criterion_id=cid, fraction=fraction, applies=mine.applies, findings=findings)
+    return merged
+
+
+def run_review(snapshot: SurveySnapshot, rubric: Rubric | None = None, kept_blockers: frozenset[str] = frozenset(),
+               provider: LlmProvider | None = None, cache: JudgeCache | None = None) -> Review:
     rubric = rubric or load_rubric()
     context = ReviewContext.build(snapshot, rubric)
     results = run_all(context)
+    ai: AiRunInfo | None = None
+    if provider is not None:
+        ai_results, ai = run_judge(snapshot, rubric, provider, cache)
+        results = _with_ai(results, ai_results)
     unchecked = [c.title for c in rubric.criteria if c.active
                  and ((r := results.get(c.id)) is None or (r.applies and r.fraction is None))]
     return Review(
         survey_title=snapshot.title, content_hash=snapshot.content_hash, rubric_version=rubric.version,
         scorecard=score(rubric, results, kept_blockers), findings=_merge(results, rubric), unchecked=unchecked,
         est_minutes=context.timing.minutes, promised_minutes=context.promised_minutes,
-        timing=context.timing, results=results)
+        timing=context.timing, results=results, ai=ai)
