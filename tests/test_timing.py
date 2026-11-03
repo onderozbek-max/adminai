@@ -1,4 +1,4 @@
-from surveycoach.snapshot import Option, Page, Question, SurveySnapshot
+from surveycoach.snapshot import Media, Option, Page, Question, SurveySnapshot
 from surveycoach.timing import TimingConstants, estimate, parse_promised_minutes
 
 
@@ -34,7 +34,7 @@ def test_open_text_costs_more_than_a_choice():
 
 def test_images_add_viewing_time():
     plain = choice()
-    pictured = choice().model_copy(update={"media": [__import__("surveycoach.snapshot", fromlist=["Media"]).Media()]})
+    pictured = choice().model_copy(update={"media": [Media()]})
     assert estimate(snapshot_of(pictured)).total_seconds > estimate(snapshot_of(plain)).total_seconds
 
 
