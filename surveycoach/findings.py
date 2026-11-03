@@ -10,6 +10,13 @@ from pydantic import BaseModel, Field
 Severity = Literal["must_fix", "worth_improving"]
 
 
+class RewriteOption(BaseModel):
+    """One way to fix the wording, for example Neutral, Shorter, or Friendlier."""
+
+    label: str
+    text: str
+
+
 class Finding(BaseModel):
     """One problem, worded so a researcher can act on it.
 
@@ -30,6 +37,7 @@ class Finding(BaseModel):
     current_text: str | None = None
     suggested_text: str | None = None
     highlight: str | None = None
+    options: list[RewriteOption] = Field(default_factory=list)   # AI findings offer several rewrites to choose from
     source: Literal["auto", "ai"] = "auto"
 
     @property

@@ -96,6 +96,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": null,
       "suggested_text": null,
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -111,6 +112,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": "Welcome to the Boxer Briefs Survey! This takes about 3 minutes.",
       "suggested_text": "Welcome to the Boxer Briefs Survey! This takes about 4 minutes. [Say what members get for finishing.]",
       "highlight": "about 3 minutes",
+      "options": [],
       "source": "auto"
      },
      {
@@ -126,6 +128,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": "Tell us what else you would like to share?",
       "suggested_text": null,
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -141,6 +144,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": "Please indicate your level of agreement with each of the following statements about the aforementioned boxer briefs.",
       "suggested_text": "Please indicate your level of agreement with each of the following statements about the boxer briefs.",
       "highlight": "aforementioned",
+      "options": [],
       "source": "auto"
      },
      {
@@ -156,6 +160,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": "Which of these matter to you?",
       "suggested_text": "Which of these matter to you? Select all that apply.",
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -171,6 +176,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": "1 to 5 years",
       "suggested_text": "1 to 4 years",
       "highlight": "1 to 5 years",
+      "options": [],
       "source": "auto"
      },
      {
@@ -186,6 +192,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": "Not at all likely ... (no label)",
       "suggested_text": "Not at all likely ... Extremely likely",
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -201,6 +208,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": null,
       "suggested_text": null,
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -216,6 +224,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": null,
       "suggested_text": null,
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -231,6 +240,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": null,
       "suggested_text": null,
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -246,6 +256,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": null,
       "suggested_text": null,
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -261,6 +272,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": null,
       "suggested_text": null,
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -276,6 +288,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": "Click the one you like best.",
       "suggested_text": "Tap the one you like best.",
       "highlight": "Click",
+      "options": [],
       "source": "auto"
      },
      {
@@ -291,6 +304,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": null,
       "suggested_text": null,
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -306,6 +320,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": null,
       "suggested_text": null,
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -321,6 +336,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": null,
       "suggested_text": null,
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -336,6 +352,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": null,
       "suggested_text": null,
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -351,6 +368,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": null,
       "suggested_text": "Anything else you'd like the product team to know? (optional)",
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -366,6 +384,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": "How much did you LOVE the fit? \ud83e\ude72",
       "suggested_text": "How much did you LOVE the fit?",
       "highlight": null,
+      "options": [],
       "source": "auto"
      },
      {
@@ -381,6 +400,7 @@ window.SURVEYCOACH_DEMO = {
       "current_text": "How much did you LOVE the fit? \ud83e\ude72",
       "suggested_text": null,
       "highlight": "LOVE",
+      "options": [],
       "source": "auto"
      }
     ],
