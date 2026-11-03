@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 
 from surveycoach.checks.registry import (ReviewContext, blocker_ok, check, finding, not_applicable, passed,
-                                         result)
+                                         clip, result)
 from surveycoach.findings import CheckResult
 from surveycoach.snapshot import Page
 
@@ -66,7 +66,7 @@ def late_screen_out(ctx: ReviewContext) -> CheckResult:
                 page_id=page.id))
         if not THANKS.search(page.text or page.intro_text):
             findings.append(finding(
-                "B3", "must_fix", page.text[:120] or "The screen-out page has no thank-you.",
+                "B3", "must_fix", clip(page.text) or "The screen-out page has no thank-you.",
                 "Thank members warmly on the screen-out page, for example: Thanks for your time! "
                 "This one isn't a match, but we'd love your help on the next one.",
                 "Members who don't qualify still decide whether to come back.", page_id=page.id))
@@ -121,7 +121,7 @@ def screeners_first(ctx: ReviewContext) -> CheckResult:
 def typing_load(ctx: ReviewContext) -> CheckResult:
     required = [q for q in ctx.snapshot.all_questions() if q.kind in OPEN_TEXT and q.required]
     fraction = 1.0 if len(required) <= 2 else 0.5 if len(required) == 3 else 0.0
-    findings = [finding("2.4", "worth_improving", q.text[:120],
+    findings = [finding("2.4", "worth_improving", clip(q.text),
                         "Make this answer optional, or replace it with answer choices.",
                         "Typing on a phone is work, and required typing makes members quit.", question_id=q.id)
                 for q in required[2:]]

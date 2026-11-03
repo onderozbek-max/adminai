@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from surveycoach.checks.registry import ReviewContext, check, finding, result, share_fraction
+from surveycoach.checks.registry import ReviewContext, check, clip, finding, result, share_fraction
 from surveycoach.findings import CheckResult, Finding
 from surveycoach.snapshot import Question
 
@@ -42,7 +42,7 @@ def _question_fit_findings(q: Question) -> list[Finding]:
     found = []
     words = len(q.text.split())
     if words > MAX_QUESTION_WORDS:
-        found.append(_phone_finding("6.1", q, f"{words} words: {q.text[:90]}",
+        found.append(_phone_finding("6.1", q, f"{words} words: {clip(q.text, 90)}",
                                     f"Shorten the question to about {MAX_QUESTION_WORDS} words or fewer.",
                                     "Long questions push the answers off the first screen."))
     if q.options_below_fold or q.fits_one_screen is False:
@@ -75,7 +75,7 @@ def tappable_answers(ctx: ReviewContext) -> CheckResult:
         problems = []
         long_labels = [o.label for o in q.options if len(o.label) > MAX_LABEL_CHARS]
         if long_labels:
-            problems.append((long_labels[0][:90], f"Keep each answer to about {MAX_LABEL_CHARS} characters (2 lines)."))
+            problems.append((clip(long_labels[0], 90), f"Keep each answer to about {MAX_LABEL_CHARS} characters (2 lines)."))
         if len(q.options) > MAX_CHOICES:
             problems.append((f"{len(q.options)} answer choices.", f"Group, alphabetize, or trim to {MAX_CHOICES} or fewer."))
         if q.kind == "dropdown" and len(q.options) <= MAX_DROPDOWN_BUTTONS:

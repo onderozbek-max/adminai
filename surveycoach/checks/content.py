@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from surveycoach.checks.registry import ReviewContext, check, finding, result, share_fraction
+from surveycoach.checks.registry import ReviewContext, check, clip, finding, result, share_fraction
 from surveycoach.checks.text import WORD, emoji_count, reading_grade, title_case_signature
 from surveycoach.findings import CheckResult, Finding
 from surveycoach.snapshot import Question
@@ -34,11 +34,11 @@ def plain_words(ctx: ReviewContext) -> CheckResult:
         grade = reading_grade(q.text) if words >= MIN_WORDS_FOR_GRADE else 0.0
         jargon = JARGON.search(q.text)
         if jargon:
-            findings.append(finding("3.2", "worth_improving", f'"{jargon.group(0)}" in: {q.text[:90]}',
+            findings.append(finding("3.2", "worth_improving", f'"{jargon.group(0)}" in: {clip(q.text, 90)}',
                                     "Use everyday words a member would use at the kitchen table.",
                                     "Jargon makes members guess or skip.", question_id=q.id))
         elif grade > MAX_GRADE:
-            findings.append(finding("3.2", "worth_improving", f"Reads at about grade {grade:.0f}: {q.text[:90]}",
+            findings.append(finding("3.2", "worth_improving", f"Reads at about grade {grade:.0f}: {clip(q.text, 90)}",
                                     f"Use shorter sentences and simpler words (aim for grade {MAX_GRADE:.0f} or lower).",
                                     "Dense wording slows members down and invites misreading.", question_id=q.id))
         failing += bool(jargon) or grade > MAX_GRADE
@@ -49,7 +49,7 @@ def plain_words(ctx: ReviewContext) -> CheckResult:
 def clear_instructions(ctx: ReviewContext) -> CheckResult:
     multi = [q for q in _questions(ctx) if q.kind == "multi_choice"]
     missing = [q for q in multi if not ALL_THAT_APPLY.search(f"{q.text} {q.help_text}")]
-    findings = [finding("3.3", "worth_improving", q.text[:120], 'Add "Select all that apply" to the question.',
+    findings = [finding("3.3", "worth_improving", clip(q.text), 'Add "Select all that apply" to the question.',
                         "Members can't tell whether they may pick more than one answer.", question_id=q.id)
                 for q in missing]
     return result("3.3", share_fraction(len(missing), len(multi)), *findings)
@@ -60,16 +60,16 @@ def emoji_rule(ctx: ReviewContext) -> CheckResult:
     """Only the emoji rule of 9.1. Tone is the AI judge's call, so the criterion stays unchecked (fraction None)."""
     findings: list[Finding] = []
     if emoji_count(ctx.snapshot.intro_text) > 1:
-        findings.append(finding("9.1", "worth_improving", ctx.snapshot.intro_text[:120],
+        findings.append(finding("9.1", "worth_improving", clip(ctx.snapshot.intro_text),
                                 "Use at most one emoji, in the intro only.", "Heavy emoji use reads as less trustworthy."))
     for q in _questions(ctx):
         in_question = emoji_count(q.text) + emoji_count(q.help_text)
         in_options = [o.label for o in q.options if emoji_count(o.label)]
         if in_question:
-            findings.append(finding("9.1", "worth_improving", q.text[:120], "Remove emoji from questions.",
+            findings.append(finding("9.1", "worth_improving", clip(q.text), "Remove emoji from questions.",
                                     "Emoji belong in the intro only.", question_id=q.id))
         for label in in_options:
-            findings.append(finding("9.1", "worth_improving", label[:120], "Remove emoji from answer choices.",
+            findings.append(finding("9.1", "worth_improving", clip(label), "Remove emoji from answer choices.",
                                     "Emoji in answers can read differently across phones.", question_id=q.id))
     return result("9.1", None, *findings)
 
@@ -78,7 +78,7 @@ def _standards_findings(ctx: ReviewContext) -> list[Finding]:
     found: list[Finding] = []
 
     def add(evidence: str, explanation: str, q: Question | None = None) -> None:
-        found.append(finding("9.2", "worth_improving", evidence[:120], explanation,
+        found.append(finding("9.2", "worth_improving", clip(evidence), explanation,
                              "Consistent, friendly wording builds trust in every survey.",
                              question_id=q.id if q else None))
 

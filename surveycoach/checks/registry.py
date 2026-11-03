@@ -57,6 +57,15 @@ def blocker_ok(blocker_id: str) -> CheckResult:
     return CheckResult(criterion_id=blocker_id)
 
 
+def clip(text: str, limit: int = 120) -> str:
+    """Shorten evidence at a word boundary, with an ellipsis, so it never ends mid-word."""
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    space = cut.rfind(" ")
+    return (cut[:space] if space > 0 else cut).rstrip(" ,;:") + "..."
+
+
 def share_fraction(failing: int, total: int) -> float:
     """Proportional credit: the share of items that pass (full credit when there is nothing to judge)."""
     return 1.0 if total == 0 else round(max(0.0, 1 - failing / total), 2)

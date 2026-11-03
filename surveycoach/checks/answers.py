@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from surveycoach.checks.registry import ReviewContext, check, finding, passed, result
+from surveycoach.checks.registry import ReviewContext, check, clip, finding, passed, result
 from surveycoach.findings import CheckResult
 from surveycoach.snapshot import Question
 
@@ -102,7 +102,7 @@ def honest_scales(ctx: ReviewContext) -> CheckResult:
     findings = []
     for q in scaled:
         for problem in _scale_problems(q):
-            findings.append(finding("4.4", "worth_improving", q.text[:120], problem,
+            findings.append(finding("4.4", "worth_improving", clip(q.text), problem,
                                     "Unlabeled or lopsided scales push members toward certain answers.", question_id=q.id))
     directions = {o for q in scaled if (o := _orientation(q))}
     if len(directions) > 1:
