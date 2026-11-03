@@ -1,0 +1,113 @@
+{
+ "verdicts": [
+  {
+   "criterion_id": "2.3",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "2.5",
+   "fraction": 0.75
+  },
+  {
+   "criterion_id": "8.1",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "8.3",
+   "fraction": 0.0
+  },
+  {
+   "criterion_id": "8.4",
+   "fraction": 0.5
+  },
+  {
+   "criterion_id": "8.5",
+   "fraction": 0.5
+  }
+ ],
+ "blockers": [],
+ "findings": [
+  {
+   "criterion_id": "2.5",
+   "page_id": "p8",
+   "question_id": "q8",
+   "severity": "worth_improving",
+   "headline": "The follow-up does not say which choice to explain",
+   "evidence": "Why did you choose them?",
+   "explanation": "Name the boxer brief style in this follow-up so members know to explain their style preference rather than their purchase.",
+   "member_impact": "Members may stop to work out what 'them' means or explain a different choice than intended.",
+   "current_text": "Why did you choose them?",
+   "suggested_text": "Why do you prefer that boxer brief style?",
+   "highlight": "them",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Why do you prefer that boxer brief style?"
+    },
+    {
+     "label": "Shorter",
+     "text": "Why that boxer brief style?"
+    },
+    {
+     "label": "Friendlier",
+     "text": "What do you like about that boxer brief style?"
+    }
+   ]
+  },
+  {
+   "criterion_id": "8.3",
+   "page_id": "p12",
+   "question_id": "",
+   "severity": "worth_improving",
+   "headline": "The ending offers no inside look or sense of contribution",
+   "evidence": "Survey complete.",
+   "explanation": "Replace the completion notice with thanks, a brief confirmed inside detail, and a concrete description of how member feedback will be used. Fill in the bracketed facts before publishing. This also addresses criterion 8.5 by giving the ending a warmer finish.",
+   "member_impact": "Members finish without feeling included in the product conversation or understanding the value of their contribution.",
+   "current_text": "Survey complete.",
+   "suggested_text": "Thank you for sharing your feedback! Here's an inside look: [one brief, confirmed detail about the boxer briefs or a decision under consideration]. Your input will help us [how the feedback will be used].",
+   "highlight": "Survey complete.",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Thank you for sharing your feedback! Here's an inside look: [one brief, confirmed detail about the boxer briefs or a decision under consideration]. Your input will help us [how the feedback will be used]."
+    },
+    {
+     "label": "Shorter",
+     "text": "Thank you! Inside look: [one brief, confirmed product detail]. Your feedback will help us [how the feedback will be used]."
+    },
+    {
+     "label": "Friendlier",
+     "text": "Thanks for sharing your take! A little behind the scenes: [one brief, confirmed detail about the boxer briefs or a decision under consideration]. You're helping us [how the feedback will be used]."
+    }
+   ]
+  },
+  {
+   "criterion_id": "8.4",
+   "page_id": "p3",
+   "question_id": "q3",
+   "severity": "worth_improving",
+   "headline": "The agreement rows contain no product feedback to judge",
+   "evidence": "Statement 1",
+   "explanation": "All seven rows use placeholder labels rather than statements about boxer briefs. Replace each with a specific, relevant statement members can assess from their experience. Keep the existing grid and agreement scale. The researcher must supply the intended content before a wording-only rewrite is possible.",
+   "member_impact": "Members cannot give meaningful agreement ratings when the rows do not say anything about the product.",
+   "current_text": null,
+   "suggested_text": null,
+   "highlight": "Statement 1",
+   "options": []
+  },
+  {
+   "criterion_id": "8.5",
+   "page_id": "p9",
+   "question_id": "q9",
+   "severity": "worth_improving",
+   "headline": "Three writing prompts in a row drain energy near the end",
+   "evidence": "What would you change?",
+   "explanation": "This prompt sits in a run of three consecutive long-answer questions late in the survey. Spread those prompts through the survey and place quick choice questions between them. This is a sequencing fix, not a change to question types or required settings.",
+   "member_impact": "Members answering on phones face a sustained stretch of typing just as they expect to finish, which can lead to rushed answers or dropping out.",
+   "current_text": null,
+   "suggested_text": null,
+   "highlight": null,
+   "options": []
+  }
+ ]
+}

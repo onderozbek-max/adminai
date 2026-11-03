@@ -10,7 +10,7 @@ from surveycoach.snapshot import Question, SurveySnapshot
 
 SENTINEL_OPEN = "<<<SURVEY_DATA"
 SENTINEL_CLOSE = "SURVEY_DATA>>>"
-PROMPT_VERSION = "3"          # bump when the wording of the prompts changes: it is part of the cache key
+PROMPT_VERSION = "4"          # bump when the wording of the prompts changes: it is part of the cache key
 
 
 def clean_line(text: str) -> str:
@@ -76,6 +76,17 @@ def system_prompt(batch: Batch, rubric: Rubric) -> str:
         "When you can rewrite wording, set current_text to the exact original text and give three options labeled "
         "Neutral, Shorter and Friendlier. Set suggested_text to the Neutral one and highlight to the exact words at fault.",
     ]
+    rules += [
+        "A rewrite changes wording only. Never change the question type (for example single choice to select all that "
+        "apply), remove or replace images, or add routing. If the fix needs any of that, describe it in the explanation "
+        "and give no rewrite. When a rewrite includes answer choices, put the question text on the first line and one "
+        "answer choice per line, and keep every existing answer choice you are not fixing.",
+        "Never state in a rewrite something you cannot know: the research purpose, why the member was invited, what they "
+        "bought or tried, what they will receive, or what will change because of their answers. Put any such fact in "
+        "square brackets for the researcher to fill in, for example [what you want to learn].",
+        "A finding's explanation and rewrites may only talk about the place the finding points to. Do not mention other "
+        "questions or pages, except to say how many share the problem.",
+    ]
     if batch.blockers:
         rules += ["For each blocker return one call with triggered true or false. A triggered blocker needs its own finding "
                   "whose criterion_id is the blocker's id (for example B1), with severity must_fix and evidence quoted "
@@ -83,8 +94,13 @@ def system_prompt(batch: Batch, rubric: Rubric) -> str:
                   "severity must_fix is only for blockers; everything else is worth_improving."]
     else:
         rules.append("severity is always worth_improving.")
+    blocker_hint = " (a blocker, if one applies)" if batch.blockers else ""
     rules += ["Problems listed under ALREADY FOUND BY CODE are done: never report those again, in the same words or in "
               "different ones.",
+              f"Report each problem once, under the single most fitting criterion{blocker_hint}; never file "
+              "the same problem under a second criterion. When several criteria want to change the same text (the welcome, "
+              "the thank-you), report one finding with one rewrite that fixes everything and name the other criteria it "
+              "covers in the explanation.",
               "Report at most 3 findings per criterion. When the same problem repeats across questions, report it once on "
               "the worst example and say in the explanation how many questions share it.",
               "Write in plain words a researcher can act on. No em dashes."]

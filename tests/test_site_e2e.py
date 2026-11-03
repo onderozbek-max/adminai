@@ -73,11 +73,20 @@ def demo_finding(page, question_id: str, criterion_id: str) -> dict:
         .find((f) => f.question_id === q && f.criterion_id === c)""", [question_id, criterion_id])
 
 
+def structural_finding(page) -> dict:
+    return page.evaluate("window.SURVEYCOACH_DEMO.surveys[0].review.findings.find((f) => f.structural)")
+
+
+def open_finding(page, finding: dict):
+    open_screen(page, "Q" + finding["question_id"][1:])      # in these samples question q7 is shown as Q7
+
+
 def test_it_opens_on_the_first_screen_with_a_must_fix_and_that_issue_selected(browser, base_url):
     page, errors = open_page(browser, base_url)
-    assert "Q4" in page.locator(".phone-bar").inner_text() and "Q4" in page.locator(".rail-item.on").inner_text()
+    shown = page.locator(".phone-bar").inner_text().split()[0]
+    assert page.locator(".rail-item.on").inner_text().startswith(shown)
     first = page.locator(".card").first
-    assert "Must fix" in first.inner_text() and "A main product rating steers members toward praise" in first.inner_text()
+    assert "Must fix" in first.inner_text()
     assert page.locator(".pin.on").get_attribute("aria-label").startswith("Issue 1")
     assert not stray_text(page) and errors == []
 
@@ -85,7 +94,8 @@ def test_it_opens_on_the_first_screen_with_a_must_fix_and_that_issue_selected(br
 def test_the_header_scores_only_what_was_checked_and_says_what_the_ai_did(browser, base_url):
     page, _ = open_page(browser, base_url)
     header = page.locator("#topbar").inner_text()
-    assert "of 96 checked" in header and "AI checked 3 of 3 parts" in header and "Needs work. Fix 3 things first." in header
+    assert "of 96 points checked" in header and "AI checked 3 of 3 parts" in header and re.search(r"Needs work\. Fix \d+ things first\.", header)
+    assert "points still unchecked (The right image is there" in header         # the unchecked checks are named, not just counted
     assert "AI check pending" not in header and "wait on the AI step" not in header
     assert "83" not in header and "84" not in header and "63%" not in header   # no 0-100 figure, no bare percentage
 
@@ -162,17 +172,17 @@ def test_an_ai_finding_offers_three_rewrites_and_the_picked_one_is_previewed_and
 
 
 def test_a_bundle_of_answer_choices_is_copy_only_and_never_drawn_on_the_phone(browser, base_url):
-    page, _ = open_page(browser, base_url)                    # opens on Q4: its must-fix rewrites the answer scale too
-    finding = demo_finding(page, "q4", "B1")
-    assert finding["structural"] is True
-    scale_labels = [line for line in finding["options"][0]["text"].splitlines()[1:] if line.strip()]
-    assert len(scale_labels) >= 3
+    page, _ = open_page(browser, base_url)
+    finding = structural_finding(page)
+    open_finding(page, finding)
+    before = phone_text(page)
+    new_choices = [line for line in finding["options"][0]["text"].splitlines()[1:] if line.strip() and line not in before]
+    assert new_choices                                          # the rewrite adds answer choices the phone does not have yet
     page.get_by_role("button", name="With fixes").click()
-    first = page.locator(".card").first
-    assert "Not previewed" in first.inner_text() and "Fixed in preview" not in first.inner_text()
-    assert "LOVE" in phone_text(page)                          # the leading wording is still there: nothing was swapped in
-    assert not any(label in phone_text(page) for label in scale_labels)   # and the bundle's answer choices did not leak into it
-    first.get_by_role("button", name="Copy suggested text").click()
+    card = card_with(page, finding["headline"])
+    assert "Not previewed" in card.inner_text() and "Fixed in preview" not in card.inner_text()
+    assert not any(choice in phone_text(page) for choice in new_choices)    # the bundle's choices did not leak into the phone
+    card.get_by_role("button", name="Copy suggested text").click()
     copied = page.evaluate("navigator.clipboard.readText()")
     assert copied == finding["options"][0]["text"] and copied.count("\n") >= 2
 
@@ -230,10 +240,14 @@ def test_the_report_explains_what_the_ai_checked_and_what_it_did_not(browser, ba
     page, _ = open_page(browser, base_url)
     page.get_by_text("About the AI check").click()
     text = page.locator(".report").inner_text()
-    assert "gpt-6.1-sol" in text and "Checked 3 of 3 parts" in text and "None had to be discarded" in text
+    dropped = page.evaluate("window.SURVEYCOACH_DEMO.surveys[0].review.ai.dropped.length")
+    merged = page.evaluate("window.SURVEYCOACH_DEMO.surveys[0].review.ai.merged.length")
+    assert "gpt-6.1-sol" in text and "Checked 3 of 3 parts" in text and "saved and reviewed by a person" in text
+    assert "same model" not in text and "comparable" not in text                       # no false comfort about reproducibility
+    assert ("Points are only lost where a finding quotes the survey" in text) == (dropped > 0)
+    assert (f"Merged {merged} overlap" in text) == (merged > 0)
     assert "nothing is edited in RedJade" in text
-    page.locator("summary", has_text="Not checked yet").click()
-    assert "The right image is there" in page.locator(".report").inner_text()
+    assert "The right image is there" in text                                          # unchecked checks are open by default
 
 
 def test_unchecked_areas_are_not_drawn_as_earned(browser, base_url):
@@ -248,8 +262,9 @@ def test_the_clean_sample_is_ready_but_says_which_checks_have_not_run(browser, b
     page.locator("select").select_option(index=1)
     header = page.locator("#topbar").inner_text()
     assert page.locator(".card").count() == 0 and "Ready to launch, but 2 checks have not run." in header
-    assert "of 96 checked" in header and "AI checked 3 of 3 parts" in header           # never an unqualified full ring
-    assert "Nothing flagged yet" in page.locator(".rail").inner_text() and "No issues found" not in page.locator(".rail").inner_text()
+    assert "of 96 points checked" in header and "AI checked 3 of 3 parts" in header    # never an unqualified full ring
+    rail = page.locator(".rail").inner_text()
+    assert "Nothing flagged" in rail and "Nothing flagged yet" not in rail            # the AI did run, so 'yet' would be wrong
     assert not stray_text(page)
 
 
@@ -258,7 +273,7 @@ def test_on_a_phone_the_phone_is_the_hero_and_opens_on_the_problem(browser, base
     phone = page.locator(".phone").bounding_box()
     assert phone["y"] < 844 / 2 and phone["y"] < page.locator(".coach").bounding_box()["y"]   # the phone starts in the top half
     assert page.get_by_role("group", name="Device").is_hidden()
-    assert "A main product rating steers members toward praise" in page.locator(".lead").inner_text()   # the top issue, above the phone
+    assert page.locator(".card-head").first.inner_text() in page.locator(".lead").inner_text()   # the top issue, above the phone
     pin, screen = page.locator('.pin[aria-label^="Issue 1"]').bounding_box(), page.locator(".phone-screen").bounding_box()
     assert screen["y"] <= pin["y"] and pin["y"] + pin["height"] <= screen["y"] + screen["height"]   # pin 1 is in view
 
@@ -268,3 +283,42 @@ def test_the_ring_never_draws_unchecked_points_as_earned(browser, base_url):
     ring = page.locator(".ring")
     earned, checked = (float(ring.evaluate(f"el => getComputedStyle(el).getPropertyValue('--{v}')").strip().replace("deg", "")) for v in "ek")
     assert earned < checked < 360                       # earned < checked < everything: a grey 'waiting' arc always remains
+
+
+def test_who_said_it_comes_first_on_every_ai_card_and_ai_rewrites_are_labeled_for_checking(browser, base_url):
+    page, _ = open_page(browser, base_url)
+    chips = [t.strip() for t in page.locator(".card").first.locator(".chips span").all_inner_texts()]
+    assert chips[1] == "AI"                                                            # right after the number, before the severity
+    assert "AI-written. Check it before you use it." in page.locator(".card").first.inner_text()
+    open_screen(page, "Q7")
+    assert "AI-written" not in card_with(page, "desktop word").inner_text()           # a rule-made fix is not labeled as AI
+
+
+def test_a_bundle_shows_its_original_choices_next_to_the_rewrite_so_they_can_be_compared(browser, base_url):
+    page, _ = open_page(browser, base_url)
+    finding = structural_finding(page)
+    open_finding(page, finding)
+    original = card_with(page, finding["headline"]).locator(".opt", has_text="Your original").inner_text()
+    options = page.evaluate("""(id) => window.SURVEYCOACH_DEMO.surveys[0].snapshot.pages
+        .flatMap((p) => p.questions || []).find((q) => q.id === id).options.map((o) => o.label)""", finding["question_id"])
+    assert options and all(label in original for label in options)
+
+
+def test_the_title_is_not_pretended_to_be_previewed_and_an_overridden_fix_says_why(browser, base_url):
+    page, _ = open_page(browser, base_url)
+    page.get_by_role("button", name="With fixes").click()
+    title = page.evaluate("window.SURVEYCOACH_DEMO.surveys[0].review.findings.find((f) => f.criterion_id === '1.1')")
+    open_screen(page, "Intro")                                                         # the title finding is anchored to the first page
+    title_card = card_with(page, title["headline"])
+    assert "Not previewed" in title_card.inner_text() and "not on a phone screen" in title_card.inner_text()
+    assert "Another fix already changes" not in title_card.inner_text()                # nothing overrode it; it is simply not drawn
+    for card in page.locator(".card").all():                                           # the chip and the note always agree
+        assert ("Not shown in preview" in card.inner_text()) == ("Another fix already changes this text" in card.inner_text())
+
+
+def test_with_fixes_the_true_time_promise_beats_an_ai_rewrite_of_the_same_paragraph(browser, base_url):
+    page, _ = open_page(browser, base_url)
+    page.get_by_role("button", name="With fixes").click()
+    open_screen(page, "Intro")
+    intro = phone_text(page)
+    assert "about 4 minutes" in intro and "about 3 minutes" not in intro               # the code-made fix is a fact, so it goes first

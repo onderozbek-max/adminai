@@ -8,3 +8,5 @@ __pycache__/
 !/spikes/**/
 !/spikes/**/*.py
 /browser-profile/
+.DS_Store
+screen*.png

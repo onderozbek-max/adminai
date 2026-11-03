@@ -27,9 +27,21 @@ class Grounded:
     dropped: list[str] = field(default_factory=list)      # what we refused to believe, and why
 
 
-def _norm(text: str) -> str:
+def norm(text: str) -> str:
     straightened = text.replace("\u2019", "'").replace("\u2018", "'").replace("\u201c", '"').replace("\u201d", '"')
     return re.sub(r"\s+", " ", straightened).strip().lower()
+
+
+_PROMPT_LABEL = re.compile(r"^\s*(option|row|help|scale label|text|intro)\s*:\s*", re.IGNORECASE)
+
+
+def quote_is_real(evidence: str, located: str) -> bool:
+    """Every line of the quote must be verbatim survey text. The model sometimes copies our `option:` labels along
+    with the words, so those labels (and only those) are ignored; an invented line still sinks the whole quote."""
+    lines = [norm(_PROMPT_LABEL.sub("", line)) for line in evidence.splitlines() if line.strip()]
+    lines = [line for line in lines if line]
+    haystack = norm(located)
+    return bool(lines) and all(line in haystack for line in lines)
 
 
 def _question_text(q: Question) -> str:
@@ -43,7 +55,7 @@ def _page_text(page: Page) -> str:
     return " ".join([page.intro_text, page.text, *[_question_text(q) for q in page.questions]])
 
 
-def _locate(snapshot: SurveySnapshot, page_id: str | None, question_id: str | None) -> tuple[str, str | None] | None:
+def locate(snapshot: SurveySnapshot, page_id: str | None, question_id: str | None) -> tuple[str, str | None] | None:
     """The text a finding may quote from, and the page it lives on. None when the place does not exist."""
     if question_id:
         for page in snapshot.pages:
@@ -59,17 +71,17 @@ def _locate(snapshot: SurveySnapshot, page_id: str | None, question_id: str | No
 
 def _rewrite(raw: AiFinding, located: str) -> tuple[str | None, str | None, list[RewriteOption], str | None]:
     """Keep a before/after only when the 'before' really is in the survey; drop no-ops; cap the options."""
-    current = raw.current_text if raw.current_text and _norm(raw.current_text) in _norm(located) else None
+    current = raw.current_text if raw.current_text and norm(raw.current_text) in norm(located) else None
     if raw.current_text and current is None:
         return None, None, [], None                       # an invented 'before' poisons the 'after' too
     options = [o for o in raw.options if o.text.strip()][:MAX_OPTIONS]
-    options = [o for o in options if not (current and _norm(o.text) == _norm(current))]
+    options = [o for o in options if not (current and norm(o.text) == norm(current))]
     suggested = raw.suggested_text
-    if suggested and current and _norm(suggested) == _norm(current):
+    if suggested and current and norm(suggested) == norm(current):
         suggested = None
     suggested = suggested or (options[0].text if options else None)
-    haystack = _norm(f"{current or ''} {raw.evidence}")
-    highlight = raw.highlight if raw.highlight and _norm(raw.highlight) in haystack else None
+    haystack = norm(f"{current or ''} {raw.evidence}")
+    highlight = raw.highlight if raw.highlight and norm(raw.highlight) in haystack else None
     return current, suggested, options, highlight
 
 
@@ -79,19 +91,18 @@ def _ground_one(raw: AiFinding, batch: Batch, raised: set[str], snapshot: Survey
         return None, f"{cid}: not part of this check"
     if cid in batch.blockers and cid not in raised:
         return None, f"{cid}: a finding for a blocker the judge did not raise"
-    placed = _locate(snapshot, raw.page_id, raw.question_id)
+    placed = locate(snapshot, raw.page_id, raw.question_id)
     if placed is None:
         return None, f"{cid}: points at a screen or question that does not exist"
     located, page_id = placed
     if cid in TITLE_CRITERIA:
         located = f"{located} {snapshot.title}"
-    if _norm(raw.evidence) not in _norm(located):
+    if not quote_is_real(raw.evidence, located):
         return None, f"{cid}: the quote was not found in the survey: {clip(raw.evidence, 60)}"
     current, suggested, options, highlight = _rewrite(raw, located)
-    # Computed here, never taken from the model: a one-line 'before' with a multi-line 'after' is a bundle (question plus
-    # answer choices), which must not be swapped into one text element of the phone preview.
-    rewrites = [t for t in (suggested, *[o.text for o in options]) if t]
-    structural = bool(current and "\n" not in current and any("\n" in t for t in rewrites))
+    # Computed here, never taken from the model: a multi-line rewrite is a bundle (question plus answer choices), which
+    # must not be swapped into one text element of the phone preview. Copy it, do not draw it.
+    structural = any("\n" in t for t in (suggested, *[o.text for o in options]) if t)
     return Finding(
         criterion_id=cid, severity="must_fix" if cid in batch.blockers else "worth_improving", headline=raw.headline,
         evidence=raw.evidence, explanation=raw.explanation, member_impact=raw.member_impact, page_id=page_id,

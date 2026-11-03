@@ -19,8 +19,16 @@
     if (state.mode !== "fixes") return null;
     return survey().review.findings.flatMap((f, key) => {
       const pick = f.current_text && chosen(f, key);
-      return pick ? [{ key, from: f.current_text, to: pick.text }] : [];
-    });
+      return pick ? [{ key, from: f.current_text, to: pick.text, ai: f.source === "ai" }] : [];
+    }).sort((a, b) => a.ai - b.ai);     // code-made fixes are facts (a true time promise), so they go first; the sort is stable
+  }
+
+  const questionById = (id) => survey().snapshot.pages.flatMap((page) => page.questions).find((q) => q.id === id);
+  /** The original as the researcher knows it. A bundle's original includes its answer choices, so the rewrite can be compared. */
+  function originalOf(entry) {
+    const { f } = entry, single = f.current_text && !f.current_text.includes("\n");   // a multi-line original already has its choices
+    const q = f.structural && single && questionById(f.question_id);
+    return q && q.options.length ? [f.current_text, ...q.options.map((o) => o.label)].join("\n") : f.current_text;
   }
 
   async function copy(text, msg) {
@@ -59,13 +67,16 @@
 
   /** One render's view of the world. "Applied" means the phone really changed: the same function decides both. */
   function context() {
-    const plan = previewPlan(), hits = plan ? SC.hitsOn(pageItem().page, plan) : new Set();
+    const page = pageItem().page, plan = previewPlan(), hits = plan ? SC.hitsOn(page, plan) : new Set();
+    const texts = SC.pageTexts(page);
     const picked = (entry) => state.mode === "fixes" && !!chosen(entry.f, entry.key);
+    const onPhone = (f) => texts.some((t) => t.includes(f.current_text));     // the survey title, say, is on no phone screen
     const applied = (entry) => picked(entry) && (entry.f.current_text ? hits.has(entry.key) : true);
-    const blocked = (entry) => picked(entry) && !!entry.f.current_text && !hits.has(entry.key);
+    const blocked = (entry) => picked(entry) && !!entry.f.current_text && onPhone(entry.f) && !hits.has(entry.key);
+    const offscreen = (entry) => picked(entry) && !!entry.f.current_text && !onPhone(entry.f);
     return {
       data: DATA, review: survey().review, selected: state.selected, device: state.device, large: state.large,
-      total: model.items.length, plan, applied, blocked, choiceOf,
+      total: model.items.length, plan, applied, blocked, offscreen, choiceOf, originalOf,
       onPin: (key) => select(key, true), onSelect: (key) => select(key, false),
       onChoose: (key, value) => { state.choices[`${state.survey}:${key}`] = value; renderAll(); },
       onCopy: copy,
@@ -94,8 +105,8 @@
       ? `${card.unchecked_points} points${card.pending_blockers.length ? ` and ${plural(card.pending_blockers.length, "launch check")}` : ""} wait on the AI step`
       : [`AI checked ${ai.checked.length} of ${ai.checked.length + failed.length} parts`,
         failed.length && `could not check ${failed.map((id) => DATA.ai_batches[id]).join(", ")}`,
-        card.unchecked_points && `${card.unchecked_points} points still unchecked`].filter(Boolean).join("; ");
-    const aiBrief = !ai ? "AI check pending" : failed.length ? "AI partly checked" : "AI checked";
+        card.unchecked_points && `${card.unchecked_points} points still unchecked (${review.unchecked.join(", ")})`].filter(Boolean).join("; ");
+    const aiBrief = !ai ? "AI check pending" : `${failed.length ? "AI partly checked" : "AI checked"}${card.unchecked_points ? `, ${card.unchecked_points} pts unchecked` : ""}`;
     // The ring shows all 100 points: earned, lost, and not checked yet. Unchecked points are never drawn as earned.
     mount($("topbar"),
       h("div", { class: "brand" }, "Survey", h("span", null, "Coach")),
@@ -103,7 +114,7 @@
         h("div", { class: `ring ${TONE[card.readiness]}`, role: "img", style: `--e:${earned * 3.6}deg;--k:${checked * 3.6}deg`,
           "aria-label": `${earned.toFixed(0)} of the ${checked} points checked so far were earned. ${waiting}.` },
         h("div", { class: "ring-in" }, earned.toFixed(0))),
-        h("span", { class: "ring-cap" }, `of ${checked} checked`)),
+        h("span", { class: "ring-cap" }, `of ${checked} points checked`)),
       h("div", { class: "head-text" },
         h("h1", null, headline(review)),
         h("p", { class: "sub" }, `${survey().title} \u2022 ${waiting}`),
@@ -122,7 +133,7 @@
       h("span", { class: `dot ${item.worst || "ok"}`, "aria-hidden": "true" }),
       h("span", { class: "rail-text" },
         h("strong", { class: "line1" }, item.name, item.topic && h("span", { class: "topic" }, ` ${item.topic}`)),
-        h("span", { class: `issue ${item.worst || "ok"}` }, n ? item.entries[0].f.headline : "Nothing flagged yet")),
+        h("span", { class: `issue ${item.worst || "ok"}` }, n ? item.entries[0].f.headline : survey().review.ai ? "Nothing flagged" : "Nothing flagged yet")),
       n > 1 && h("span", { class: "count", "aria-label": plural(n, "issue") }, String(n)));
   }
 

@@ -8,10 +8,11 @@
     const area = ctx.data.dimensions[criterion.dimension];   // blockers have no area; "Must fix" already says it
     return h("div", { class: "chips" },
       h("span", { class: "badge-n" }, String(n)),
+      f.source === "ai" && h("span", { class: "chip ai" }, "AI"),      // who said it comes first: an AI claim is never mistaken for a rule
       h("span", { class: `chip ${f.severity}` }, SC.SEVERITY[f.severity]),
-      f.source === "ai" && h("span", { class: "chip ai" }, "AI"),
       area && h("span", { class: "chip area" }, area),
-      f.structural && h("span", { class: "chip" }, "Not previewed"),
+      (f.structural || ctx.offscreen(entry)) && h("span", { class: "chip warn" }, "Not previewed"),
+      ctx.blocked(entry) && h("span", { class: "chip warn" }, "Not shown in preview"),
       ctx.applied(entry) && h("span", { class: "chip good" }, "Fixed in preview"));
   }
 
@@ -28,6 +29,12 @@
 
   const spaced = (...parts) => parts.filter(Boolean).flatMap((p, i) => (i ? [" ", p] : [p]));
 
+  /** A bundle is the question on its first line and one answer choice per line; show the stem bold and the choices compact. */
+  const bundle = (text) => {
+    const [stem, ...choices] = text.split("\n");
+    return [h("span", { class: "stem" }, stem), choices.length ? h("span", { class: "choices" }, choices.join(" \u00b7 ")) : null];
+  };
+
   /** "Which version is better?": the researcher's pick drives the phone preview and what gets copied. */
   function choiceBlock(entry, ctx) {
     const { f, key, n } = entry, choices = SC.choicesOf(f), picked = ctx.choiceOf(key) || choices[0].value;
@@ -37,18 +44,22 @@
       h("input", { type: "radio", name: `choice-${key}`, value, checked: picked === value, "data-fk": `opt-${key}-${value}`, onchange: () => ctx.onChoose(key, value) }),
       h("span", { class: "opt-body" }, h("span", { class: "opt-label" }, label), h("span", { class: "opt-text" }, body)));
     const alone = choices.length === 1 && markable ? diffParts(f.current_text, choices[0].text) : null;
-    const original = alone ? spaced(alone.head, alone.cut && h("del", null, alone.cut), alone.tail) : f.current_text || "Nothing added";
+    const original = alone ? spaced(alone.head, alone.cut && h("del", null, alone.cut), alone.tail)
+      : f.structural && f.current_text ? bundle(ctx.originalOf(entry)) : f.current_text || "Nothing added";
     const version = (c) => {
+      if (f.structural) return bundle(c.text);
       if (!markable) return c.text;
       const d = diffParts(f.current_text, c.text);
       return spaced(d.head, d.add && h("ins", null, d.add), d.tail);
     };
     const note = f.structural ? "This changes answer choices, so it is not drawn on the phone. Copy it and paste it into RedJade yourself."
+      : ctx.offscreen(entry) ? "This text is not on a phone screen (the survey title, for example), so it cannot be previewed. Copy it into RedJade yourself."
       : picked === "original" ? "Your original stays in the preview."
         : ctx.blocked(entry) ? "Another fix already changes this text in the preview, so this one is not shown."
           : "Shown on the phone under With fixes.";
     return h("fieldset", { class: `choice${f.structural ? " pre" : ""}` },
       h("legend", null, "Which version is better?"),
+      f.source === "ai" && h("p", { class: "ai-note" }, "AI-written. Check it before you use it."),
       radio("original", f.current_text ? "Your original" : "Leave as is", original),
       choices.map((c) => radio(c.value, c.label, version(c))),
       h("div", { class: "actions" },
@@ -83,10 +94,11 @@
     const ai = ctx.review.ai, titles = ctx.data.ai_batches, failed = Object.entries(ai.failed);
     return h("details", null, h("summary", null, "About the AI check"),
       h("ul", { class: "plain" },
-        h("li", null, `Judge: ${ai.model}, the same model for every review, so scores stay comparable.`),
+        h("li", null, `Judge: ${ai.model}. For these sample surveys its answers were saved and reviewed by a person; this page replays them.`),
         h("li", null, `Checked ${ai.checked.length} of ${ai.checked.length + failed.length} parts: ${ai.checked.map((id) => titles[id]).join(", ") || "none"}.`),
         failed.map(([id, why]) => h("li", null, `Could not check ${titles[id]}: ${why}`)),
-        h("li", null, ai.dropped.length ? `Ignored ${plural(ai.dropped.length, "claim")} the survey did not back up.` : "Every AI finding quotes the survey word for word. None had to be discarded."),
+        h("li", null, ai.dropped.length ? `Ignored ${plural(ai.dropped.length, "claim")} the survey did not back up. Points are only lost where a finding quotes the survey.` : "Every AI finding quotes the survey word for word. None had to be discarded."),
+        ai.merged.length ? h("li", null, `Merged ${plural(ai.merged.length, "overlap")} so each piece of text has one rewrite and each problem appears once.`) : null,
         h("li", null, "AI findings are marked AI. You decide what to change; nothing is edited in RedJade for you.")));
   }
 
@@ -98,7 +110,7 @@
         h("ul", { class: "areas" }, Object.entries(scorecard.by_dimension).map(([id, d]) => areaRow(id, d, ctx))),
         h("p", { class: "legend" }, h("i", { class: "got" }), " earned ", h("i", { class: "lost" }), " lost ", h("i", { class: "wait" }), " not checked yet")),
       ai ? aiDetails(ctx) : null,
-      unchecked.length ? h("details", null, h("summary", null, ai ? `Not checked yet (${plural(unchecked.length, "check")})` : `Waiting on the AI step (${plural(unchecked.length, "check")})`),
+      unchecked.length ? h("details", { open: true }, h("summary", null, ai ? `Not checked yet (${plural(unchecked.length, "check")})` : `Waiting on the AI step (${plural(unchecked.length, "check")})`),
         h("ul", { class: "plain" }, unchecked.map((title) => h("li", null, title)))) : null,
       h("details", null, h("summary", null, "What is working"),
         h("ul", { class: "plain" }, (scorecard.strengths.length ? scorecard.strengths : ["Nothing confirmed yet."]).map((s) => h("li", null, s)))));

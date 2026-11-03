@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from surveycoach.findings import CheckResult, Finding
 from surveycoach.judge.batches import BATCHES, Batch
 from surveycoach.judge.cache import JudgeCache
+from surveycoach.judge.dedupe import dedupe
 from surveycoach.judge.grounding import ground
 from surveycoach.judge.prompts import survey_block, system_prompt
 from surveycoach.judge.schemas import BatchOutput
@@ -25,6 +26,7 @@ class AiRunInfo(BaseModel):
     failed: dict[str, str] = Field(default_factory=dict)      # batch id -> why it could not check
     dropped: list[str] = Field(default_factory=list)          # claims refused because the survey did not back them up
     from_cache: list[str] = Field(default_factory=list)
+    merged: list[str] = Field(default_factory=list)           # overlaps removed so each text has one rewrite
 
 
 def _answer(batch: Batch, snapshot: SurveySnapshot, rubric: Rubric, provider: LlmProvider,
@@ -60,4 +62,5 @@ def run_judge(snapshot: SurveySnapshot, rubric: Rubric, provider: LlmProvider, c
             grounded = ground(output, batch, snapshot, rubric)
             results.update(grounded.results)
             info.dropped += [f"{batch.id}: {note}" for note in grounded.dropped]
+    results, info.merged = dedupe(results, rubric)
     return results, info

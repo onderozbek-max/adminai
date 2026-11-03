@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from surveycoach.demo_export import SITE_DATA, build_demo_data, render_data_js
+from surveycoach.judge.grounding import norm
 
 ROOT = Path(__file__).parent.parent
 
@@ -69,14 +70,40 @@ def test_the_demo_build_can_never_call_the_network():
 
 def test_every_ai_finding_in_the_demo_is_grounded_in_the_sample_survey():
     """Belt and braces on the human-reviewed cache: each quote really is in the survey it is attached to."""
-    from surveycoach.judge.grounding import _locate, _norm
+    from surveycoach.judge.grounding import locate, quote_is_real
     from surveycoach.snapshot import SurveySnapshot
     for survey in parsed()["surveys"]:
         snapshot = SurveySnapshot.model_validate_json((ROOT / "fixtures" / f"{survey['id']}.json").read_text())
         for f in survey["review"]["findings"]:
             if f["source"] != "ai":
                 continue
-            text, _ = _locate(snapshot, f["page_id"], f["question_id"])
+            text, _ = locate(snapshot, f["page_id"], f["question_id"])
             if f["criterion_id"] == "1.1":
                 text += " " + snapshot.title
-            assert _norm(f["evidence"]) in _norm(text), (survey["id"], f["criterion_id"], f["evidence"])
+            assert quote_is_real(f["evidence"], text), (survey["id"], f["criterion_id"], f["evidence"])
+
+
+def _ai_findings(survey):
+    return [f for f in survey["review"]["findings"] if f["source"] == "ai"]
+
+
+def test_no_text_is_offered_two_competing_ai_rewrites():
+    for survey in parsed()["surveys"]:
+        rewritten = [norm(f["current_text"]) for f in _ai_findings(survey) if f["current_text"] and f["options"]]
+        assert len(rewritten) == len(set(rewritten)), survey["id"]
+
+
+def test_an_ai_finding_never_repeats_a_blocker_finding_on_the_same_question_and_quote():
+    for survey in parsed()["surveys"]:
+        findings = _ai_findings(survey)
+        blocked = {(f["question_id"] or f["page_id"], norm(f["evidence"])) for f in findings if f["criterion_id"].startswith("B")}
+        repeats = [f["criterion_id"] for f in findings
+                   if not f["criterion_id"].startswith("B") and (f["question_id"] or f["page_id"], norm(f["evidence"])) in blocked]
+        assert repeats == [], (survey["id"], repeats)
+
+
+def test_every_multi_line_rewrite_is_marked_copy_only():
+    for survey in parsed()["surveys"]:
+        for f in _ai_findings(survey):
+            bundled = any("\n" in t for t in [f["suggested_text"] or "", *[o["text"] for o in f["options"]]])
+            assert f["structural"] is bundled, (survey["id"], f["criterion_id"])

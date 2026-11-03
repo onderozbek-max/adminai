@@ -1,0 +1,112 @@
+{
+ "verdicts": [
+  {
+   "criterion_id": "1.1",
+   "fraction": 0.5
+  },
+  {
+   "criterion_id": "1.2",
+   "fraction": 0.25
+  },
+  {
+   "criterion_id": "1.3",
+   "fraction": 0.0
+  },
+  {
+   "criterion_id": "9.1",
+   "fraction": 0.75
+  },
+  {
+   "criterion_id": "10.1",
+   "fraction": 0.0
+  },
+  {
+   "criterion_id": "10.3",
+   "fraction": 0.0
+  }
+ ],
+ "blockers": [],
+ "findings": [
+  {
+   "criterion_id": "1.1",
+   "page_id": "p0",
+   "question_id": "",
+   "severity": "worth_improving",
+   "headline": "The title labels the survey instead of inviting participation",
+   "evidence": "Member's Mark Boxer Briefs Feedback Survey",
+   "explanation": "Keep the specific product name, but use sentence case and an invitation to share a perspective.",
+   "member_impact": "A welcoming title makes the survey feel like a conversation rather than an administrative task.",
+   "current_text": "Member's Mark Boxer Briefs Feedback Survey",
+   "suggested_text": "Share your thoughts on Member's Mark boxer briefs",
+   "highlight": "Boxer Briefs Feedback Survey",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Share your thoughts on Member's Mark boxer briefs"
+    },
+    {
+     "label": "Shorter",
+     "text": "Your take on Member's Mark boxer briefs"
+    },
+    {
+     "label": "Friendlier",
+     "text": "Let's talk about Member's Mark boxer briefs"
+    }
+   ]
+  },
+  {
+   "criterion_id": "1.2",
+   "page_id": "p0",
+   "question_id": "",
+   "severity": "worth_improving",
+   "headline": "The welcome leaves out the purpose and the member's role",
+   "evidence": "Welcome to the Boxer Briefs Survey! This takes about 3 minutes.",
+   "explanation": "Explain what you want to learn and why this member was invited. Invite the member to contribute as a co-creator rather than simply complete a survey. This also covers criterion 1.3. Fill in the bracketed facts before publishing. The rewrite preserves the existing timing statement because its accuracy is already flagged separately.",
+   "member_impact": "Members cannot tell why their perspective matters or what they are being invited to help explore.",
+   "current_text": "Welcome to the Boxer Briefs Survey! This takes about 3 minutes.",
+   "suggested_text": "Welcome! We'd like to explore [what you want to learn about Member's Mark boxer briefs] with you. You're invited because [why this member was asked]. Bring your perspective as a co-creator. This takes about 3 minutes.",
+   "highlight": "Welcome to the Boxer Briefs Survey!",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Welcome! We'd like to explore [what you want to learn about Member's Mark boxer briefs] with you. You're invited because [why this member was asked]. Bring your perspective as a co-creator. This takes about 3 minutes."
+    },
+    {
+     "label": "Shorter",
+     "text": "Help us explore [what you want to learn about Member's Mark boxer briefs] as a co-creator. You're invited because [why this member was asked]. This takes about 3 minutes."
+    },
+    {
+     "label": "Friendlier",
+     "text": "Welcome! Let's explore [what you want to learn about Member's Mark boxer briefs] together. We invited you because [why this member was asked]. We'd love your perspective as a co-creator. This takes about 3 minutes."
+    }
+   ]
+  },
+  {
+   "criterion_id": "10.1",
+   "page_id": "p12",
+   "question_id": "",
+   "severity": "worth_improving",
+   "headline": "The closing gives a status message instead of thanks",
+   "evidence": "Survey complete.",
+   "explanation": "Thank members for their time and perspective, then briefly explain how their answers will be used. This also covers criterion 10.3 and the cold closing under criterion 9.1. Replace the bracketed text with a confirmed use of the answers, without promising changes or follow-up you cannot guarantee.",
+   "member_impact": "Members finish without feeling appreciated or knowing what will happen with their answers.",
+   "current_text": "Survey complete.",
+   "suggested_text": "Thank you for taking the time to share your thoughts on Member's Mark boxer briefs. Your answers will help us [how the answers will be used].",
+   "highlight": "Survey complete.",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Thank you for taking the time to share your thoughts on Member's Mark boxer briefs. Your answers will help us [how the answers will be used]."
+    },
+    {
+     "label": "Shorter",
+     "text": "Thanks for your feedback on Member's Mark boxer briefs! Your answers will help us [how the answers will be used]."
+    },
+    {
+     "label": "Friendlier",
+     "text": "Thanks for sharing your thoughts with us! We appreciate your time and perspective on Member's Mark boxer briefs. Your answers will help us [how the answers will be used]."
+    }
+   ]
+  }
+ ]
+}

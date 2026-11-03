@@ -124,7 +124,8 @@ th, td { padding: 6px 2px; text-align: center; } th[scope="row"] { text-align: l
 .badge-n { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #223244; font-weight: 800; font-size: 12px; }
 .chip { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 99px; background: var(--panel2); color: #9fd0ff; }
 .chip.must_fix { background: var(--red-bg); color: var(--red); } .chip.worth_improving { background: var(--amber-bg); color: var(--amber); }
-.chip.good { background: var(--green-bg); color: var(--green); } .chip.ai { background: #2a2150; color: #cdbdff; } .chip.area { background: var(--panel2); color: #9fd0ff; }
+.chip.good { background: var(--green-bg); color: var(--green); } .chip.ai { background: #5b3fd6; color: #fff; font-size: 12px; }
+.chip.warn { background: var(--amber-bg); color: var(--amber); } .chip.area { background: var(--panel2); color: #9fd0ff; }
 .card h3 { font-size: 16px; line-height: 1.3; }
 .card-head { display: block; width: 100%; min-height: 24px; padding: 0; text-align: left; background: none; border: 0; font-weight: 700; font-size: inherit; line-height: inherit; }
 .why, .fix { color: var(--muted); font-size: 14px; } .fix strong { color: var(--text); }
@@ -141,8 +142,9 @@ ins { background: var(--green-bg); color: var(--green); text-decoration: none; b
 .opt input::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--blue); transform: scale(0); }
 .opt input:checked { border-color: var(--blue); } .opt input:checked::before { transform: scale(1); }
 .opt-body { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
-.choice.pre .opt-text, .opt-text.pre { white-space: pre-line; }
-.choice.pre .opt:not(.on) .opt-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }   /* a bundle of choices opens only when picked */
+.opt-text .stem { display: block; font-weight: 600; } .opt-text .choices { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+.ai-note { margin: 0 0 6px; font-size: 12px; color: #cdbdff; }
+.choice.pre .opt:not(.on) .choices { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }   /* the question always shows; its choices open when picked */
 .opt-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .btn { min-height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--blue); color: var(--ink); font-weight: 700; }

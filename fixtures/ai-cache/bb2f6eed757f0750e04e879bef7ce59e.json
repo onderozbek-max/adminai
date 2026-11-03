@@ -1,0 +1,174 @@
+{
+ "verdicts": [
+  {
+   "criterion_id": "3.1",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "3.4",
+   "fraction": 0.9
+  },
+  {
+   "criterion_id": "3.5",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "4.1",
+   "fraction": 0.3
+  },
+  {
+   "criterion_id": "4.3",
+   "fraction": 0.5
+  },
+  {
+   "criterion_id": "5.1",
+   "fraction": 0.5
+  },
+  {
+   "criterion_id": "5.2",
+   "fraction": 1.0
+  },
+  {
+   "criterion_id": "5.3",
+   "fraction": 1.0
+  }
+ ],
+ "blockers": [
+  {
+   "blocker_id": "B1",
+   "triggered": true
+  },
+  {
+   "blocker_id": "B2",
+   "triggered": true
+  },
+  {
+   "blocker_id": "B6",
+   "triggered": false
+  }
+ ],
+ "findings": [
+  {
+   "criterion_id": "B1",
+   "page_id": "p4",
+   "question_id": "q4",
+   "severity": "must_fix",
+   "headline": "The fit question assumes members loved it",
+   "evidence": "How much did you LOVE the fit? 🩲",
+   "explanation": "Ask about fit without assuming a positive reaction. Use answer choices that allow positive, neutral and negative feedback, plus an answer for members who have not worn the boxer briefs. This also covers criterion 5.1.",
+   "member_impact": "Members who disliked the fit must translate their experience into a degree of love, which can push feedback toward positive answers.",
+   "current_text": "How much did you LOVE the fit? 🩲\nNot at all\nA little\nSomewhat\nVery much",
+   "suggested_text": "How satisfied or dissatisfied are you with the fit of these boxer briefs?\nVery dissatisfied\nSomewhat dissatisfied\nNeither satisfied nor dissatisfied\nSomewhat satisfied\nVery satisfied\nI have not worn them\nNot sure",
+   "highlight": "LOVE",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "How satisfied or dissatisfied are you with the fit of these boxer briefs?\nVery dissatisfied\nSomewhat dissatisfied\nNeither satisfied nor dissatisfied\nSomewhat satisfied\nVery satisfied\nI have not worn them\nNot sure"
+    },
+    {
+     "label": "Shorter",
+     "text": "How satisfied are you with the fit?\nVery dissatisfied\nSomewhat dissatisfied\nNeither satisfied nor dissatisfied\nSomewhat satisfied\nVery satisfied\nI have not worn them\nNot sure"
+    },
+    {
+     "label": "Friendlier",
+     "text": "Thinking about how these boxer briefs fit, how satisfied or dissatisfied are you?\nVery dissatisfied\nSomewhat dissatisfied\nNeither satisfied nor dissatisfied\nSomewhat satisfied\nVery satisfied\nI have not worn them\nNot sure"
+    }
+   ]
+  },
+  {
+   "criterion_id": "B2",
+   "page_id": "p1",
+   "question_id": "q1",
+   "severity": "must_fix",
+   "headline": "Only three purchases are possible answers",
+   "evidence": "Which Member's Mark Boxer Briefs did you buy?\n    option: Navy 3-pack\n    option: Black 3-pack\n    option: Grey 6-pack",
+   "explanation": "Keep the listed packs and add answers for another pack, no purchase and not remembering. Four questions share the problem of a required choice list without a suitable answer for some members. This finding also covers criteria 4.1 and 4.3.",
+   "member_impact": "Members who bought a different pack, received the product without buying it or cannot remember must choose an inaccurate purchase to continue.",
+   "current_text": "Which Member's Mark Boxer Briefs did you buy?\nNavy 3-pack\nBlack 3-pack\nGrey 6-pack",
+   "suggested_text": "Which Member's Mark Boxer Briefs did you buy?\nNavy 3-pack\nBlack 3-pack\nGrey 6-pack\nAnother pack\nI did not buy Member's Mark Boxer Briefs\nI don't remember",
+   "highlight": "Which Member's Mark Boxer Briefs did you buy?",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Which Member's Mark Boxer Briefs did you buy?\nNavy 3-pack\nBlack 3-pack\nGrey 6-pack\nAnother pack\nI did not buy Member's Mark Boxer Briefs\nI don't remember"
+    },
+    {
+     "label": "Shorter",
+     "text": "Which Member's Mark Boxer Briefs pack did you buy?\nNavy 3-pack\nBlack 3-pack\nGrey 6-pack\nAnother pack\nI didn't buy any\nI don't remember"
+    },
+    {
+     "label": "Friendlier",
+     "text": "Which pack of Member's Mark Boxer Briefs did you buy, if any?\nNavy 3-pack\nBlack 3-pack\nGrey 6-pack\nA different pack\nI didn't buy any\nI'm not sure"
+    }
+   ]
+  },
+  {
+   "criterion_id": "B2",
+   "page_id": "p3",
+   "question_id": "q3",
+   "severity": "must_fix",
+   "headline": "The agreement rows contain no statements to judge",
+   "evidence": "Statement 1",
+   "explanation": "Replace all seven numbered row labels with actual statements about the boxer briefs before launch. Each row should express one specific idea. The intended statements are not supplied, so a complete rewrite cannot be provided. This also covers criterion 4.1.",
+   "member_impact": "Members cannot agree or disagree meaningfully with a numbered placeholder, so any required response would be a guess.",
+   "current_text": null,
+   "suggested_text": null,
+   "highlight": "Statement 1",
+   "options": []
+  },
+  {
+   "criterion_id": "4.3",
+   "page_id": "p9",
+   "question_id": "q9",
+   "severity": "worth_improving",
+   "headline": "The change prompt does not acknowledge having nothing to change",
+   "evidence": "What would you change?",
+   "explanation": "Make clear that having no changes or being unsure is an acceptable response. Keep the existing text-answer format.",
+   "member_impact": "Members who are satisfied or unsure may feel they must invent a change to answer the required question.",
+   "current_text": "What would you change?",
+   "suggested_text": "What, if anything, would you change about these boxer briefs? You can write 'Nothing' or 'Not sure'.",
+   "highlight": "What would you change?",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "What, if anything, would you change about these boxer briefs? You can write 'Nothing' or 'Not sure'."
+    },
+    {
+     "label": "Shorter",
+     "text": "What would you change about these boxer briefs, if anything? 'Nothing' or 'Not sure' is fine."
+    },
+    {
+     "label": "Friendlier",
+     "text": "Is there anything you would change about these boxer briefs? It's fine to write 'Nothing' or 'Not sure'."
+    }
+   ]
+  },
+  {
+   "criterion_id": "3.4",
+   "page_id": "p10",
+   "question_id": "q10",
+   "severity": "worth_improving",
+   "headline": "An instruction ends with a question mark",
+   "evidence": "Tell us what else you would like to share?",
+   "explanation": "End this instruction with a period, or phrase it as a direct question.",
+   "member_impact": "The mismatched punctuation makes the closing prompt less polished and slightly harder to read.",
+   "current_text": "Tell us what else you would like to share?",
+   "suggested_text": "Tell us what else you would like to share.",
+   "highlight": "share?",
+   "options": [
+    {
+     "label": "Neutral",
+     "text": "Tell us what else you would like to share."
+    },
+    {
+     "label": "Shorter",
+     "text": "What else would you like to share?"
+    },
+    {
+     "label": "Friendlier",
+     "text": "Is there anything else you'd like to share?"
+    }
+   ]
+  }
+ ]
+}

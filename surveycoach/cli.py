@@ -24,6 +24,9 @@ def _ai_lines(review: Review) -> list[str]:
     if info.failed:
         lines.append(f"  could not check: {', '.join(titles[b] for b in info.failed)}")
         lines += [f"    {titles[b]}: {why}" for b, why in info.failed.items()]
+    if info.merged:
+        lines.append(f"  merged {len(info.merged)} overlaps so each text has one rewrite:")
+        lines += [f"    - {note}" for note in info.merged]
     if info.dropped:
         lines.append(f"  ignored {len(info.dropped)} claims the survey did not back up:")
         lines += [f"    - {note}" for note in info.dropped]

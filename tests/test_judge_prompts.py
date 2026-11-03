@@ -94,3 +94,31 @@ def test_the_prompt_tells_the_judge_to_skip_known_problems_and_not_to_spam_patte
 def test_a_triggered_blocker_must_come_with_its_own_finding_filed_under_the_blockers_id():
     prompt = system_prompt(WORDING, RUBRIC)
     assert "criterion_id is the blocker's id" in prompt and "for example B1" in prompt
+
+
+def test_rewrites_may_only_change_wording_and_must_keep_the_answer_choices_it_is_not_fixing():
+    prompt = system_prompt(WORDING, RUBRIC)
+    assert "wording only" in prompt and "question type" in prompt and "images" in prompt
+    assert "one answer choice per line" in prompt and "keep every existing answer choice" in prompt
+
+
+def test_rewrites_never_state_facts_the_judge_cannot_know_and_use_square_brackets_for_the_researcher():
+    prompt = system_prompt(STORY, RUBRIC)
+    for unknown in ("research purpose", "why the member was invited", "what they bought", "what they will receive"):
+        assert unknown in prompt
+    assert "square brackets" in prompt
+
+
+def test_each_problem_is_reported_once_and_one_text_gets_one_rewrite():
+    prompt = system_prompt(FLOW, RUBRIC)
+    assert "once, under the single most fitting criterion" in prompt and "one rewrite that fixes everything" in prompt
+
+
+def test_a_finding_may_only_talk_about_the_place_it_points_to():
+    assert "only talk about the place the finding points to" in system_prompt(WORDING, RUBRIC)
+
+
+def test_every_batch_carries_the_same_rewrite_discipline():
+    for batch in (WORDING, STORY, FLOW):
+        prompt = system_prompt(batch, RUBRIC)
+        assert "square brackets" in prompt and "wording only" in prompt and "once, under the single most fitting criterion" in prompt

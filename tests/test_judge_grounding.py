@@ -177,3 +177,31 @@ def test_a_single_line_rewrite_is_a_plain_text_swap():
 def test_findings_default_to_not_structural():
     assert Finding(criterion_id="5.1", severity="worth_improving", headline="h", evidence="e", explanation="x",
                    member_impact="m").structural is False
+
+
+def test_a_quote_spanning_the_question_and_one_of_its_choices_is_accepted_when_every_line_is_real():
+    both = f"{LOUD}\n    option: A lot"                           # the model copied our 'option:' label along with the text
+    assert the_finding(run(output([finding(evidence=both)], fraction=0.5, only="5.1"))).evidence == both
+
+
+def test_one_invented_line_in_a_multi_line_quote_sinks_the_whole_quote():
+    faked = f"{LOUD}\n    option: Absolutely everything"
+    grounded = run(output([finding(evidence=faked)], fraction=0.5, only="5.1"))
+    assert grounded.results["5.1"].findings == [] and any("quote was not found" in note for note in grounded.dropped)
+
+
+def test_a_quote_made_only_of_labels_is_not_a_quote():
+    grounded = run(output([finding(evidence="option:\nrow:")], fraction=0.5, only="5.1"))
+    assert grounded.results["5.1"].findings == [] and any("quote was not found" in note for note in grounded.dropped)
+
+
+def test_a_bundle_is_structural_even_when_the_models_before_text_is_the_whole_multi_line_original():
+    whole = f"{LOUD}\nA lot\nA little"
+    bundle = [RewriteOption(label="Neutral", text=f"{LOUD}\nA lot\nA little\nNone of these")]
+    kept = the_finding(run(output([finding(current_text=whole, options=bundle)])))
+    assert kept.structural is True
+
+
+def test_a_multi_line_rewrite_with_no_before_text_is_structural_too():
+    bundle = [RewriteOption(label="Neutral", text="A new question?\nYes\nNo")]
+    assert the_finding(run(output([finding(options=bundle)]))).structural is True
