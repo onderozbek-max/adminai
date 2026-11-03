@@ -17,6 +17,7 @@ from surveycoach.snapshot import Page, Question, SurveySnapshot
 
 CREDIT_CAP_WITH_FINDING = 0.75   # one real problem can never score as full marks
 MAX_OPTIONS = 3
+TITLE_CRITERIA = {"1.1"}               # the survey title belongs to the survey, not to any page, so only these may quote it
 MAX_FINDINGS_PER_CRITERION = 3   # a pattern is one finding on its worst example, not a wall of cards
 
 
@@ -82,6 +83,8 @@ def _ground_one(raw: AiFinding, batch: Batch, raised: set[str], snapshot: Survey
     if placed is None:
         return None, f"{cid}: points at a screen or question that does not exist"
     located, page_id = placed
+    if cid in TITLE_CRITERIA:
+        located = f"{located} {snapshot.title}"
     if _norm(raw.evidence) not in _norm(located):
         return None, f"{cid}: the quote was not found in the survey: {clip(raw.evidence, 60)}"
     current, suggested, options, highlight = _rewrite(raw, located)

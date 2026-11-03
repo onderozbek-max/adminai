@@ -148,3 +148,16 @@ def test_no_criterion_gets_more_than_three_findings_and_the_rest_are_reported_as
     grounded = run(output(many, fraction=0.5, only="5.1"))
     assert [f.headline for f in grounded.results["5.1"].findings] == ["Problem 0", "Problem 1", "Problem 2"]
     assert len([n for n in grounded.dropped if "too many" in n]) == 2
+
+
+def test_the_survey_title_is_quotable_for_the_title_criterion_even_when_a_page_is_cited():
+    from surveycoach.judge.batches import STORY
+    title = snapshot().title
+    f = finding(criterion_id="1.1", page_id="p0", question_id=None, evidence=title)
+    grounded = ground(BatchOutput(verdicts=[Verdict(criterion_id="1.1", fraction=0.5)], findings=[f]), STORY, snapshot(), RUBRIC)
+    assert grounded.results["1.1"].findings and grounded.dropped == []
+
+
+def test_the_title_is_not_a_loophole_for_other_criteria():
+    title = snapshot().title
+    assert run(output([finding(evidence=title)])).results["5.1"].findings == []

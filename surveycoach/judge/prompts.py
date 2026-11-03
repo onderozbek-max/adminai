@@ -10,7 +10,7 @@ from surveycoach.snapshot import Question, SurveySnapshot
 
 SENTINEL_OPEN = "<<<SURVEY_DATA"
 SENTINEL_CLOSE = "SURVEY_DATA>>>"
-PROMPT_VERSION = "2"          # bump when the wording of the prompts changes: it is part of the cache key
+PROMPT_VERSION = "3"          # bump when the wording of the prompts changes: it is part of the cache key
 
 
 def clean_line(text: str) -> str:
@@ -77,9 +77,10 @@ def system_prompt(batch: Batch, rubric: Rubric) -> str:
         "Neutral, Shorter and Friendlier. Set suggested_text to the Neutral one and highlight to the exact words at fault.",
     ]
     if batch.blockers:
-        rules += ["For each blocker return one call with triggered true or false. A triggered blocker needs a finding "
-                  "with severity must_fix. severity must_fix is only for blockers; everything else is worth_improving.",
-                  ]
+        rules += ["For each blocker return one call with triggered true or false. A triggered blocker needs its own finding "
+                  "whose criterion_id is the blocker's id (for example B1), with severity must_fix and evidence quoted "
+                  "from the survey; a finding filed under another criterion does not count for the blocker. "
+                  "severity must_fix is only for blockers; everything else is worth_improving."]
     else:
         rules.append("severity is always worth_improving.")
     rules += ["Problems listed under ALREADY FOUND BY CODE are done: never report those again, in the same words or in "

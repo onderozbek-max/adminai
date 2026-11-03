@@ -89,3 +89,8 @@ def test_the_prompt_tells_the_judge_to_skip_known_problems_and_not_to_spam_patte
     prompt = system_prompt(WORDING, RUBRIC)
     assert "ALREADY FOUND BY CODE" in prompt and "never report" in prompt
     assert "at most 3 findings per criterion" in prompt and "worst example" in prompt
+
+
+def test_a_triggered_blocker_must_come_with_its_own_finding_filed_under_the_blockers_id():
+    prompt = system_prompt(WORDING, RUBRIC)
+    assert "criterion_id is the blocker's id" in prompt and "for example B1" in prompt
