@@ -10,32 +10,32 @@ SENTINEL_CLOSE = "SURVEY_DATA>>>"
 PROMPT_VERSION = "1"          # bump when the wording of the prompts changes: it is part of the cache key
 
 
-def _clean(text: str) -> str:
+def clean_line(text: str) -> str:
     """One line, with anything that looks like our delimiters defused so survey text cannot end the data block."""
     one_line = " ".join(text.split())
     return one_line.replace(SENTINEL_CLOSE, "SURVEY_DATA> > >").replace(SENTINEL_OPEN, "< < <SURVEY_DATA")
 
 
 def _question_lines(q: Question) -> list[str]:
-    lines = [f"  QUESTION {q.id} [{q.kind}, {'required' if q.required else 'optional'}]: {_clean(q.text)}"]
+    lines = [f"  QUESTION {q.id} [{q.kind}, {'required' if q.required else 'optional'}]: {clean_line(q.text)}"]
     if q.help_text:
-        lines.append(f"    help: {_clean(q.help_text)}")
-    lines += [f"    option: {_clean(o.label)}" for o in q.options]
-    lines += [f"    row: {_clean(r)}" for r in q.rows]
+        lines.append(f"    help: {clean_line(q.help_text)}")
+    lines += [f"    option: {clean_line(o.label)}" for o in q.options]
+    lines += [f"    row: {clean_line(r)}" for r in q.rows]
     if q.scale:
-        ends = f"low '{_clean(q.scale.low_label or '(unlabeled)')}', high '{_clean(q.scale.high_label or '(unlabeled)')}'"
+        ends = f"low '{clean_line(q.scale.low_label or '(unlabeled)')}', high '{clean_line(q.scale.high_label or '(unlabeled)')}'"
         lines.append(f"    scale: {q.scale.points} points, {ends}")
-        lines += [f"    scale label: {_clean(label)}" for label in q.scale.labels]
+        lines += [f"    scale label: {clean_line(label)}" for label in q.scale.labels]
     return lines
 
 
 def survey_block(snapshot: SurveySnapshot) -> str:
-    lines = [SENTINEL_OPEN, f"SURVEY: {_clean(snapshot.title)} (type: {snapshot.survey_type})"]
+    lines = [SENTINEL_OPEN, f"SURVEY: {clean_line(snapshot.title)} (type: {snapshot.survey_type})"]
     for page in snapshot.pages:
         lines.append(f"PAGE {page.id} ({page.kind}, position {page.position})")
         for label, text in (("intro", page.intro_text), ("text", page.text)):
             if text:
-                lines.append(f"  {label}: {_clean(text)}")
+                lines.append(f"  {label}: {clean_line(text)}")
         for q in page.questions:
             lines += _question_lines(q)
     lines.append(SENTINEL_CLOSE)
