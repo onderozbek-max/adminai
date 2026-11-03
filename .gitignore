@@ -4,5 +4,7 @@ node_modules/
 .env
 *.db
 __pycache__/
-/spikes/
+/spikes/**
+!/spikes/**/
+!/spikes/**/*.py
 /browser-profile/
