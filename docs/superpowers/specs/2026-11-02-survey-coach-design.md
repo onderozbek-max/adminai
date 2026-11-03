@@ -240,7 +240,7 @@ read-only in the review workspace.
 
 | Layer | Choice | Why |
 |---|---|---|
-| Frontend | React + Vite + Living Design (Sam's Club theme) | Walmart UI standard, multi-theme, a11y tooling |
+| Frontend | React + Vite, custom dark "Studio" design from mockups 02, 03, 05 | Onder's explicit call (2026-11-02): the aligned mockups win over Living Design, which has no dark theme. WCAG 2.2 AA still applies; no proprietary kit, so the demo can be public |
 | Backend | Python + FastAPI | Async jobs, SSE, Playwright and LLM orchestration |
 | Storage | SQLite (SQLModel) + local files for images and packets | Local single-user v1, zero ops |
 | Crawler | Playwright (Python, headless Chromium) | Real rendering, images, screenshots |

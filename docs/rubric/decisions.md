@@ -74,3 +74,11 @@ active criteria**:
 **MMC app itself**: a one-tap rating when a member returns from a completed activity.
 That would restore the cleanest ground truth for both MMC and SurveyCoach. It's an MMC
 roadmap candidate for Onder, not a SurveyCoach feature.
+
+## 2026-11-02: Visual direction is the dark Studio design, not Living Design
+
+The first static demo ignored the aligned mockups (docs/superpowers/designs 02, 03, 05) and
+shipped a generic light report page. A committee review missed it because the reviewers were
+not given the mockups. Decision (Onder): build the UI to the mockups' dark Studio look in
+custom CSS. Living Design has no dark theme, so this overrides the "compose from LD" rule.
+Any future design review must be given the mockups and spec as its yardstick.
