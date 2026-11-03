@@ -1,227 +1,200 @@
 (() => {
   "use strict";
+  const SC = window.SC, { h, mount, $, say, plural, clock } = SC;
   const DATA = window.SURVEYCOACH_DEMO;
-  const READINESS = { ready: "Ready to launch", almost_ready: "Almost ready", needs_work: "Needs work" };
-  const SEVERITY = { must_fix: "Must fix", worth_improving: "Worth improving" };
-  const state = { survey: 0, filter: "all", selected: null, page: 0 };
-  const $ = (id) => document.getElementById(id);
+  const DEVICES = [["iPhone SE", 320], ["iPhone 16", 390], ["Android XL", 412]];
+  const TONE = { needs_work: "red", almost_ready: "amber", ready: "green" };
+  const state = { survey: 0, screen: 0, mode: "current", device: 390, large: false, selected: null, choices: {} };
+  let model;
 
-  // Build DOM with textContent only: sample data can never inject markup.
-  function h(tag, attrs, ...kids) {
-    const el = document.createElement(tag);
-    for (const [k, v] of Object.entries(attrs || {})) {
-      if (v === false || v == null) continue;
-      if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
-      else el.setAttribute(k, v === true ? "" : v);
-    }
-    for (const kid of kids.flat(Infinity)) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(kid));
-    return el;
-  }
-  const current = () => DATA.surveys[state.survey];
-  // replaceChildren() would print "false" for `cond && element`, so every render goes through here.
-  const mount = (el, ...kids) => el.replaceChildren(...kids.flat(Infinity).filter(Boolean));
-  const say = (text) => { $("status").textContent = text; };
-  const crit = (id) => DATA.criteria[id] || { title: id };
+  const survey = () => DATA.surveys[state.survey];
+  const current = () => model.order[state.screen];
+  const pageItem = () => (current().page ? current() : model.items[0]);
+  const choiceOf = (key) => state.choices[`${state.survey}:${key}`] || "suggested";
+  const applied = (entry) => state.mode === "fixes" && !!entry.f.suggested_text && choiceOf(entry.key) === "suggested";
 
-  function pageIndexOf(finding, snapshot) {
-    if (finding.page_id) return snapshot.pages.findIndex((p) => p.id === finding.page_id);
-    if (finding.question_id) return snapshot.pages.findIndex((p) => (p.questions || []).some((q) => q.id === finding.question_id));
-    return -1;
-  }
-  const whereLabel = (f, snapshot) => {
-    const i = pageIndexOf(f, snapshot);
-    return i < 0 ? "Whole survey" : `Screen ${i + 1}`;
-  };
-
-  /* ---------- summary ---------- */
-  function renderSummary() {
-    const { review } = current(), card = review.scorecard;
-    const dims = Object.values(card.by_dimension).map((d) =>
-      h("li", null, h("span", null, d.name),
-        h("meter", { min: 0, max: d.possible, value: d.earned, "aria-label": `${d.name}: ${d.earned.toFixed(1)} of ${d.possible} points` }),
-        h("span", { class: "num" }, `${d.earned.toFixed(1)} / ${d.possible}`)));
-    const promise = review.promised_minutes ? ` (the intro promises ${review.promised_minutes})` : "";
-    mount($("summary"), 
-      h("h2", { id: "summary-h" }, "Review summary"),
-      h("span", { class: `badge ${card.readiness}` }, READINESS[card.readiness]),
-      h("p", { class: "score" }, card.score.toFixed(1), h("small", null, ` out of 100${card.provisional ? " (provisional)" : ""}`)),
-      card.provisional && h("p", { class: "note" }, `${card.unchecked_points} of the 100 points are judged by the AI step, which has not run on this sample, so they count as full credit for now.`),
-      card.open_blockers.length > 0 && h("p", { class: "note" }, h("strong", null, "Must fix before launch: "), card.open_blockers.map((b) => `${b} ${crit(b).title}`).join("; ")),
-      card.pending_blockers.length > 0 && h("p", { class: "note" }, `Blockers ${card.pending_blockers.join(", ")} need the AI step, so this cannot be called Ready to launch yet.`),
-      h("p", { class: "note" }, `Members will need about ${review.est_minutes} minutes${promise}. This is an estimate.`),
-      h("h3", null, "Score by area"), h("ul", { class: "dims" }, dims));
-  }
-
-  /* ---------- findings ---------- */
-  const visibleFindings = () => current().review.findings
-    .map((f, index) => ({ f, index })).filter(({ f }) => state.filter === "all" || f.severity === state.filter);
-
-  function renderFindings() {
-    const { review, snapshot } = current(), all = review.findings;
-    const count = (sev) => all.filter((f) => f.severity === sev).length;
-    const filters = [["all", `All (${all.length})`], ["must_fix", `Must fix (${count("must_fix")})`], ["worth_improving", `Worth improving (${count("worth_improving")})`]]
-      .map(([key, label]) => h("button", { type: "button", "aria-pressed": String(state.filter === key), onclick: () => setFilter(key) }, label));
-    const items = visibleFindings().flatMap(({ f, index }) => {
-      const open = state.selected === index;
-      const row = h("li", { class: f.severity },
-        h("button", { type: "button", class: "row", "data-idx": index, "aria-expanded": String(open), "aria-controls": open ? "finding-detail" : false, onclick: () => selectFinding(index) },
-          h("span", { class: "tag" }, SEVERITY[f.severity]), " ", h("strong", null, crit(f.criterion_id).title),
-          h("div", { class: "crit" }, `Rubric ${f.criterion_id} \u2022 ${whereLabel(f, snapshot)}`),
-          h("div", null, f.evidence)));
-      return open ? [row, h("li", { class: "detail-item" }, renderDetail())] : [row];
+  /** current text -> chosen suggestion, so the phone can show the survey as it would read after the fixes. */
+  function fixMap() {
+    if (state.mode !== "fixes") return null;
+    const map = {};
+    survey().review.findings.forEach((f, key) => {
+      if (f.current_text && f.suggested_text && choiceOf(key) === "suggested") map[f.current_text] = f.suggested_text;
     });
-    mount($("findings"), 
-      h("h2", { id: "findings-h" }, `Findings (${all.length})`),
-      h("div", { class: "filters", role: "group", "aria-label": "Filter findings" }, filters),
-      state.selected == null && h("p", { class: "note" }, "Select a finding to see the fix and jump to that screen on the phone."),
-      items.length ? h("ul", { class: "finding-list" }, items) : h("p", { class: "note" }, "Nothing here. This sample has no findings in this group."),
-      h("div", { class: "lists" },
-        h("h3", null, "What is working"), h("ul", null, (review.scorecard.strengths.length ? review.scorecard.strengths : ["Nothing stands out yet."]).map((s) => h("li", null, s))),
-        h("h3", null, "Waiting on the AI step"), h("ul", null, review.unchecked.map((s) => h("li", null, s)))));
+    return map;
   }
 
-  function renderDetail() {
-    const { review, snapshot } = current(), f = review.findings[state.selected], msg = h("p", { class: "note", role: "status" });
-    return h("div", { class: "detail", id: "finding-detail" },
-      h("h3", null, crit(f.criterion_id).title),
-      h("dl", null,
-        h("dt", null, "Where"), h("dd", null, whereLabel(f, snapshot)),
-        h("dt", null, "What we found"), h("dd", null, f.evidence),
-        h("dt", null, "How to fix it"), h("dd", null, f.explanation),
-        h("dt", null, "Why it matters to members"), h("dd", null, f.member_impact)),
-      h("div", { class: "actions" },
-        h("button", { type: "button", class: "copy", onclick: () => copyFix(f.explanation, msg) }, "Copy suggestion"),
-        h("button", { type: "button", onclick: showOnPhone }, "Show on phone")),
-      msg);
-  }
-
-  function showOnPhone() {
-    const heading = $("phone-h");
-    heading.setAttribute("tabindex", "-1");
-    heading.scrollIntoView({ block: "start" });
-    heading.focus();
-  }
-
-  function backToFinding() {
-    const button = document.querySelector(`[data-idx="${state.selected}"]`);
-    if (button) { button.scrollIntoView({ block: "center" }); button.focus(); }
-  }
-
-  async function copyFix(text, msg) {
+  async function copy(text, msg) {
     try {
       await navigator.clipboard.writeText(text);
       msg.textContent = "Copied. Paste it into RedJade yourself: SurveyCoach does not change your survey.";
     } catch (_) {
-      msg.textContent = "Copy is not available in this browser. Select the suggestion text above and copy it.";
+      msg.textContent = "Copy is not available in this browser. Select the suggested text and copy it.";
     }
   }
 
-  function setFilter(key) {
-    state.filter = key;
-    renderFindings();
-    document.querySelector('.filters [aria-pressed="true"]').focus();
+  function scrollPhoneTo(key) {
+    const pinEl = document.querySelector(`.phone-screen [data-pin="${key}"]`), screen = document.querySelector(".phone-screen");
+    if (!pinEl || !screen) return;
+    const s = screen.getBoundingClientRect(), p = pinEl.getBoundingClientRect();
+    screen.scrollTop += p.top - s.top - s.height / 3;   // scroll the phone only, never the page
   }
 
-  function selectFinding(index) {
-    state.selected = index;
-    const target = pageIndexOf(current().review.findings[index], current().snapshot);
-    if (target >= 0) state.page = target;
-    renderFindings(); renderPhone();
-    document.querySelector(`[data-idx="${index}"]`).focus();
-    const flagged = document.querySelector(".q.selected");
-    if (flagged) flagged.scrollIntoView({ block: "nearest" });
-  }
-
-  /* ---------- phone ---------- */
-  const points = (scale) => Array.from({ length: scale.points }, (_, i) => (scale.points === 11 ? i : i + 1));
-  const ratio = (m) => (m.natural_w && m.natural_h ? `${m.natural_w} / ${m.natural_h}` : "1 / 1");
-
-  function mediaBox(m) {
-    if (m.loaded === false) return h("div", { class: "media broken", role: "img", "aria-label": "Image failed to load" }, "Image failed to load");
-    return h("div", { class: "media", role: "img", "aria-label": m.alt || "Image without alt text", style: `aspect-ratio:${ratio(m)}` },
-      `Image ${m.natural_w || "?"} x ${m.natural_h || "?"} px${m.alt ? "" : " (no alt text)"}`);
-  }
-
-  function optionList(q) {
-    const hidden = q.options_below_fold || 0, items = [];
-    q.options.forEach((o, i) => {
-      if (hidden && i === q.options.length - hidden) items.push(h("li", { class: "fold" }, "Below the fold on a phone"));
-      items.push(h("li", null, o.media ? mediaBox(o.media) : null, o.label));
-    });
-    return h("ul", { class: q.options.some((o) => o.media) ? "opts grid-opts" : "opts" }, items);
-  }
-
-  function questionBody(q) {
-    const scale = q.scale;
-    switch (q.kind) {
-      case "dropdown": return h("div", { class: "dropdown" }, h("span", null, "Select one"), h("span", null, `${q.options.length} choices`));
-      case "text_short": case "text_long": return h("div", { class: "textbox" }, "Type your answer here");
-      case "rating": case "slider": return [h("div", { class: "scale" }, points(scale).map((n) => h("span", null, String(n)))),
-        h("div", { class: "ends" }, h("span", null, scale.low_label || "(no label)"), h("span", null, scale.high_label || "(no label)"))];
-      case "grid_single": case "grid_multi": return h("table", null, h("caption", null, `${scale.low_label || ""} to ${scale.high_label || ""}`),
-        h("thead", null, h("tr", null, h("td", null), points(scale).map((n) => h("th", { scope: "col" }, String(n))))),
-        h("tbody", null, q.rows.map((r) => h("tr", null, h("th", { scope: "row" }, r), points(scale).map(() => h("td", null, h("span", { class: "dot" })))))));
-      default: return optionList(q);
+  function select(key, focusCard) {
+    state.screen = Math.max(0, model.order.findIndex((item) => item.entries.some((e) => e.key === key)));
+    state.selected = key;
+    renderAll();
+    scrollPhoneTo(key);
+    if (focusCard) {
+      const head = document.querySelector(`[data-fk="card-${key}"]`);
+      head.focus();
+      head.scrollIntoView({ block: "nearest" });
     }
   }
 
-  function renderQuestion(q, flags, selectedId) {
-    const cls = ["q", flags && "flagged", flags && flags.must && "has-must", q.id === selectedId && "selected", q.kind === "multi_choice" && "multi"].filter(Boolean).join(" ");
-    return h("div", { class: cls },
-      flags && h("p", { class: "flag-note" }, `Coach flagged this question (${flags.count})`),
-      (q.media || []).map(mediaBox),
-      h("p", { class: "q-text" }, q.text), q.help_text && h("p", { class: "help" }, q.help_text),
-      questionBody(q), q.required === false && h("p", { class: "help" }, "Optional"));
+  function goToScreen(i) {
+    state.screen = i;
+    state.selected = current().entries.length ? current().entries[0].key : null;
+    renderAll();
   }
 
-  function renderPage(page, flagsByQuestion, selectedId) {
-    if (page.kind === "intro") return [h("h3", null, "Welcome"), h("p", null, page.intro_text), h("div", { class: "next" }, "Start")];
-    if (page.kind !== "question") return h("div", { class: "centered" }, h("p", null, page.text));
-    return [(page.questions || []).map((q) => renderQuestion(q, flagsByQuestion[q.id], selectedId)), h("div", { class: "next" }, "Next")];
+  const context = () => ({
+    data: DATA, review: survey().review, selected: state.selected, device: state.device, large: state.large,
+    total: model.items.length, fixes: fixMap(), applied, choiceOf,
+    onPin: (key) => select(key, true), onSelect: (key) => select(key, false),
+    onChoose: (key, value) => { state.choices[`${state.survey}:${key}`] = value; renderAll(); },
+    onCopy: copy,
+  });
+
+  /* ---------- header ---------- */
+  const stat = (value, label, tone) => h("div", { class: `stat ${tone}` }, h("dd", null, String(value)), h("dt", null, label));
+
+  function headline(review) {
+    const { readiness, open_blockers } = review.scorecard;
+    const must = review.findings.filter((f) => f.severity === "must_fix").length, worth = review.findings.length - must;
+    if (readiness === "needs_work") return `Needs work. Fix ${plural(open_blockers.length || must, "thing")} first.`;
+    if (readiness === "ready") return "Ready to launch.";
+    return worth ? `Almost ready. ${plural(worth, "improvement")} to consider.` : "Nothing to fix yet. The AI step still has to run.";
   }
 
-  function renderPhone() {
-    const { review, snapshot } = current(), pages = snapshot.pages, page = pages[state.page];
-    const flags = {};
-    review.findings.forEach((f) => { if (f.question_id) { const e = flags[f.question_id] || (flags[f.question_id] = { count: 0, must: false }); e.count++; e.must ||= f.severity === "must_fix"; } });
-    const selected = state.selected == null ? null : review.findings[state.selected].question_id;
-    mount($("phone-panel"), 
-      h("h2", { id: "phone-h" }, "Phone preview"),
-      h("p", { class: "note" }, "A simple picture of what a member sees. Flagged questions are outlined and labeled."),
-      h("div", { class: "phone" },
-        h("div", { class: "phone-bar" }, h("span", null, `Screen ${state.page + 1} of ${pages.length}`), h("span", null, page.kind === "question" ? "Question" : page.kind.replace("_", " "))),
-        h("div", { class: "phone-screen", tabindex: "0", role: "region", "aria-label": "Survey screen preview, scrollable" }, renderPage(page, flags, selected))),
+  function renderTop() {
+    const { review } = survey(), card = review.scorecard;
+    const checked = 100 - card.unchecked_points, earned = card.score - card.unchecked_points;
+    const must = review.findings.filter((f) => f.severity === "must_fix").length, worth = review.findings.length - must;
+    const promised = review.promised_minutes ? `intro promises ${review.promised_minutes}` : "";
+    const waiting = `${card.unchecked_points} points${card.pending_blockers.length ? ` and ${plural(card.pending_blockers.length, "launch check")}` : ""} wait on the AI step`;
+    // The ring shows all 100 points: earned, lost, and not checked yet. Unchecked points are never drawn as earned.
+    mount($("topbar"),
+      h("div", { class: "brand" }, "Survey", h("span", null, "Coach")),
+      h("div", { class: "ring-block" },
+        h("div", { class: `ring ${TONE[card.readiness]}`, role: "img", style: `--e:${earned * 3.6}deg;--k:${checked * 3.6}deg`,
+          "aria-label": `${earned.toFixed(0)} of the ${checked} points checked so far were earned. ${waiting}.` },
+        h("div", { class: "ring-in" }, earned.toFixed(0))),
+        h("span", { class: "ring-cap" }, `of ${checked} checked`)),
+      h("div", { class: "head-text" },
+        h("h1", null, headline(review)),
+        h("p", { class: "sub" }, `${survey().title} \u2022 ${waiting}`),
+        h("p", { class: "brief" }, `${must} must fix \u2022 ${worth} worth improving \u2022 ${review.est_minutes} min \u2022 AI check pending`)),
+      h("dl", { class: "stats" }, stat(must, "must fix", "red"), stat(worth, "worth improving", "amber"),
+        stat(`${review.est_minutes} min`, promised ? `for members, ${promised}` : "for members", "plain")),
+      h("label", { class: "pick" }, h("span", null, "Sample survey"),
+        h("select", { "data-fk": "survey-picker", onchange: (e) => chooseSurvey(Number(e.target.value)) },
+          DATA.surveys.map((s, i) => h("option", { value: i, selected: i === state.survey }, s.title)))));
+  }
+
+  /* ---------- rail ---------- */
+  function railItem(item, i) {
+    const on = i === state.screen, n = item.entries.length;
+    return h("button", { type: "button", class: `rail-item${on ? " on" : ""}`, "data-fk": `rail-${i}`, "aria-current": on ? "true" : false, onclick: () => goToScreen(i) },
+      h("span", { class: `dot ${item.worst || "ok"}`, "aria-hidden": "true" }),
+      h("span", { class: "rail-text" },
+        h("strong", { class: "line1" }, item.name, item.topic && h("span", { class: "topic" }, ` ${item.topic}`)),
+        h("span", { class: `issue ${item.worst || "ok"}` }, n ? item.entries[0].f.headline : "Nothing flagged yet")),
+      n > 1 && h("span", { class: "count", "aria-label": plural(n, "issue") }, String(n)));
+  }
+
+  /* ---------- stage ---------- */
+  const seg = (label, options, value, onPick, prefix) =>
+    h("div", { class: "seg", role: "group", "aria-label": label },
+      options.map(([v, text]) => h("button", { type: "button", "aria-pressed": String(v === value), "data-fk": `${prefix}-${v}`, onclick: () => onPick(v) }, text)));
+
+  function goToPage(index) {
+    state.screen = model.order.indexOf(model.items[index]);
+    state.selected = current().entries.length ? current().entries[0].key : null;
+    renderAll();
+  }
+
+  /** One line above the phone (phones only): what is wrong on this screen, without scrolling to the coach. */
+  function leadLine() {
+    const entry = current().entries.find((e) => e.key === state.selected);
+    if (!entry) return null;
+    return h("button", { type: "button", class: `lead ${entry.f.severity}`, "data-fk": "lead", onclick: () => {
+      const head = document.querySelector(`[data-fk="card-${entry.key}"]`);
+      head.focus(); head.scrollIntoView({ block: "center" });
+    } }, h("span", { class: "badge-n" }, String(entry.n)), h("span", null, entry.f.headline), h("span", { class: "more" }, "Details"));
+  }
+
+  function renderStage() {
+    const item = pageItem(), s = survey(), seconds = s.timeline[item.index].seconds;
+    mount($("stage"),
+      h("h2", { id: "stage-h", class: "sr-only" }, "Phone preview"),
+      h("div", { class: "toolbar" },
+        seg("View", [["current", "Current"], ["fixes", "With fixes"]], state.mode, (v) => { state.mode = v; renderAll(); say(v === "fixes" ? "Showing the survey with your chosen fixes." : "Showing the survey as it is now."); }, "mode"),
+        seg("Device", DEVICES.map(([name, w]) => [String(w), name]), String(state.device), (v) => { state.device = Number(v); renderAll(); }, "dev"),
+        h("button", { type: "button", class: "toggle", "aria-pressed": String(state.large), "data-fk": "large", onclick: () => { state.large = !state.large; renderAll(); } }, "Large text")),
+      leadLine(),
+      SC.renderPhone(item, context()),
       h("div", { class: "pager" },
-        h("button", { type: "button", disabled: state.page === 0, onclick: () => goTo(state.page - 1) }, "Previous screen"),
-        h("button", { type: "button", disabled: state.page === pages.length - 1, onclick: () => goTo(state.page + 1) }, "Next screen")),
-      state.selected != null && h("p", null, h("button", { type: "button", class: "linkish", onclick: backToFinding }, "Back to the selected finding")));
+        h("button", { type: "button", "data-fk": "prev", disabled: item.index === 0, onclick: () => goToPage(item.index - 1) }, "Previous screen"),
+        h("button", { type: "button", "data-fk": "next", disabled: item.index === model.items.length - 1, onclick: () => goToPage(item.index + 1) }, "Next screen")),
+      h("div", { class: "timing" },
+        h("p", null, `Members reach this screen at about ${clock(seconds)} of ${clock(s.total_seconds)}.`),
+        h("div", { class: "timebar", "aria-hidden": "true" }, h("i", { style: `left:${(seconds / s.total_seconds) * 100}%` }))));
   }
 
-  function goTo(n) {
-    state.page = n;
-    renderPhone();
-    const next = document.querySelector(".pager button:not(:disabled)");
-    (n === 0 ? document.querySelectorAll(".pager button")[1] : n === current().snapshot.pages.length - 1 ? document.querySelectorAll(".pager button")[0] : next).focus();
+  /* ---------- boot ---------- */
+  function restoreFocus(key) {
+    if (!key) return;
+    const target = document.querySelector(`[data-fk="${key}"]`);
+    const usable = target && !target.disabled ? target : $("stage").querySelector(".pager button:not(:disabled)");
+    if (usable) usable.focus({ preventScroll: true });
   }
 
-  /* ---------- picker and boot ---------- */
-  function renderPicker() {
-    $("picker").replaceChildren(...DATA.surveys.map((s, i) =>
-      h("label", null, h("input", { type: "radio", name: "survey", value: i, checked: i === state.survey, onchange: () => chooseSurvey(i) }), h("span", null, s.title))));
+  function centerSelectedInRail() {   // scroll the rail strip only, never the page
+    const rail = $("rail"), on = rail.querySelector(".rail-item.on");
+    if (!on) return;
+    if (rail.scrollWidth > rail.clientWidth && getComputedStyle(rail).flexDirection === "row") {
+      rail.scrollLeft = on.offsetLeft - (rail.clientWidth - on.offsetWidth) / 2;
+    } else if (rail.scrollHeight > rail.clientHeight) {
+      rail.scrollTop = on.offsetTop - (rail.clientHeight - on.offsetHeight) / 2;
+    }
+  }
+
+  let lastPage = null;
+  function renderAll() {
+    const active = document.activeElement, key = active && active.dataset ? active.dataset.fk : null;
+    const before = document.querySelector(".phone-screen"), keepTop = before ? before.scrollTop : 0;
+    const pageKey = `${state.survey}:${pageItem().index}`, samePage = pageKey === lastPage;
+    lastPage = pageKey;
+    renderTop();
+    mount($("strip"), h("span", { class: "long" }, DATA.disclaimer), h("span", { class: "short" }, DATA.disclaimer_short));
+    mount($("rail"), h("h2", { class: "sr-only" }, "Screens"), model.order.map(railItem));
+    renderStage();
+    mount($("coach"), SC.renderCoach(current(), context()));
+    centerSelectedInRail();
+    if (samePage) document.querySelector(".phone-screen").scrollTop = keepTop;
+    else if (state.selected != null) scrollPhoneTo(state.selected);
+    restoreFocus(key);
   }
 
   function chooseSurvey(i) {
-    Object.assign(state, { survey: i, filter: "all", selected: null, page: 0 });
+    state.survey = i;
+    model = SC.buildModel(survey());
+    state.mode = "current";
+    state.screen = model.order.indexOf(model.start);
+    state.selected = model.start.entries.length ? model.start.entries[0].key : null;
     renderAll();
-    say(`Showing the sample survey: ${current().title}. Readiness: ${READINESS[current().review.scorecard.readiness]}.`);
+    say(`Showing the sample survey: ${survey().title}. ${SC.READINESS[survey().review.scorecard.readiness]}.`);
   }
 
-  function renderAll() {
-    $("blurb").textContent = current().blurb;
-    renderSummary(); renderFindings(); renderPhone();
-  }
-
-  $("disclaimer").textContent = DATA.disclaimer;
-  renderPicker();
-  renderAll();
+  chooseSurvey(0);
 })();

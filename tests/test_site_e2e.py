@@ -43,54 +43,138 @@ def open_page(browser, base_url, width=1280):
 
 
 def stray_text(page) -> list[str]:
-    lines = [line.strip() for line in page.locator("main").inner_text().splitlines()]
+    lines = [line.strip() for line in page.locator("body").inner_text().splitlines()]
     return [bad for bad in BAD_TEXT if bad in lines] + [line for line in lines if "[object" in line]
 
 
-@pytest.mark.parametrize("sample", [0, 1])
-def test_every_phone_screen_renders_real_text(browser, base_url, sample):
+def phone_text(page) -> str:
+    return page.locator(".phone-screen").inner_text()
+
+
+def test_it_opens_on_the_first_screen_with_a_must_fix_and_that_issue_selected(browser, base_url):
     page, errors = open_page(browser, base_url)
-    page.locator(".picker label").nth(sample).click()
-    total = int(page.locator(".phone-bar span").first.inner_text().split(" of ")[1])
-    for _ in range(total):
-        body = page.locator(".phone-screen").inner_text()
-        assert "[object" not in body and "undefined" not in body, body[:100]
+    assert "Q7" in page.locator(".phone-bar").inner_text()
+    assert "Q7" in page.locator(".rail-item.on").inner_text()
+    first = page.locator(".card").first
+    assert "Must fix" in first.inner_text() and "Image didn't load: Relaxed fit" in first.inner_text()
+    assert page.locator(".pin.on").get_attribute("aria-label").startswith("Issue 1")
+    assert not stray_text(page) and errors == []
+
+
+def test_the_header_scores_only_what_was_checked_and_says_so(browser, base_url):
+    page, _ = open_page(browser, base_url)
+    header = page.locator("#topbar").inner_text()
+    assert "of 46 checked" in header and "54 points and 3 launch checks wait on the AI step" in header
+    assert "Needs work. Fix 1 thing first." in header
+    assert "83" not in header and "84" not in header and "63%" not in header   # no 0-100 figure, no bare percentage
+
+
+@pytest.mark.parametrize("sample", [0, 1])
+def test_every_screen_renders_real_text(browser, base_url, sample):
+    page, errors = open_page(browser, base_url)
+    page.locator("select").select_option(index=sample)
+    for i in range(page.locator(".rail-item").count()):
+        page.locator(".rail-item").nth(i).click()
+        assert "[object" not in phone_text(page) and "undefined" not in phone_text(page)
         assert not stray_text(page)
-        if page.get_by_role("button", name="Next screen").is_enabled():
-            page.get_by_role("button", name="Next screen").click()
     assert errors == []
 
 
 @pytest.mark.parametrize("width", [320, 390, 768, 1280])
 def test_page_reflows_without_sideways_scroll(browser, base_url, width):
     page, _ = open_page(browser, base_url, width)
-    page.locator(".finding-list .row").nth(3).click()
+    page.locator(".rail-item").nth(3).click()
     assert page.evaluate("document.documentElement.scrollWidth") <= width
 
 
-def test_selecting_a_finding_opens_its_detail_and_jumps_the_phone(browser, base_url):
-    page, errors = open_page(browser, base_url)
-    first = page.locator(".finding-list .row").first
-    first.click()
-    assert first.get_attribute("aria-expanded") == "true"
-    assert page.evaluate("document.activeElement.dataset.idx") == "0"          # focus survives the re-render
-    assert "Screen 8 of 13" in page.locator(".phone-bar").inner_text()          # the must-fix is on screen 8
-    assert "Coach flagged this question" in page.locator(".q.selected").inner_text()
-    assert not stray_text(page) and errors == []
-
-
-def test_copy_suggestion_copies_the_fix_and_says_nothing_was_changed(browser, base_url):
+def test_clicking_a_pin_selects_its_card_and_moves_focus_there(browser, base_url):
     page, _ = open_page(browser, base_url)
-    page.locator(".finding-list .row").first.click()
-    page.get_by_role("button", name="Copy suggestion").click()
-    page.wait_for_function("document.querySelector('#finding-detail p[role=status]').textContent.length > 0")
-    assert "does not change your survey" in page.locator("#finding-detail p[role=status]").inner_text()
-    assert "Fix or replace the image" in page.evaluate("navigator.clipboard.readText()")
+    page.locator('.pin[aria-label^="Issue 2"]').click()       # the "Click" pin
+    assert page.locator(".card.selected").inner_text().startswith("2")
+    assert page.evaluate("document.activeElement.className") == "card-head"
+    assert "desktop word" in page.evaluate("document.activeElement.textContent")
 
 
-def test_clean_sample_shows_no_findings_and_is_still_not_ready(browser, base_url):
+def test_focus_stays_on_the_control_the_user_used(browser, base_url):
     page, _ = open_page(browser, base_url)
-    page.locator(".picker label").nth(1).click()
-    assert page.locator(".finding-list .row").count() == 0
-    assert "Almost ready" in page.locator("#summary").inner_text()
+    page.get_by_role("button", name="Large text").focus()
+    page.keyboard.press("Enter")
+    assert page.evaluate("document.activeElement.dataset.fk") == "large"
+    page.locator(".rail-item").nth(2).focus()
+    page.keyboard.press("Enter")
+    assert page.evaluate("document.activeElement.dataset.fk") == "rail-2"
+
+
+def test_with_fixes_shows_the_survey_as_it_would_read_and_your_pick_wins(browser, base_url):
+    page, _ = open_page(browser, base_url)
+    assert "Click" in phone_text(page)
+    page.get_by_role("button", name="With fixes").click()
+    assert "Tap the one you like best." in phone_text(page) and "Click the one" not in phone_text(page)
+    assert "Fixed in preview" in page.locator(".card").nth(1).inner_text()
+    page.locator(".card").nth(1).get_by_label("Your original").check()      # the researcher overrules the coach
+    assert "Tap the one" not in phone_text(page) and "Click" in phone_text(page)   # a pin sits between the words
+
+
+def test_with_fixes_applies_to_options_and_the_intro_and_adds_suggested_questions(browser, base_url):
+    page, _ = open_page(browser, base_url)
+    page.get_by_role("button", name="With fixes").click()
+    page.locator(".rail-item").first.click()                                  # Intro
+    assert "takes about 4 minutes. [Say what members get for finishing.]" in phone_text(page)
+    page.locator(".rail-item", has_text="Q2").click()
+    assert "1 to 4 years" in phone_text(page) and "1 to 5 years" not in phone_text(page)
+    page.locator(".rail-item", has_text="Q10").click()
+    page.get_by_role("button", name="Next screen").click()                    # Q11: the scale end gets its label
+    assert "Extremely likely" in phone_text(page)
+
+
+def test_copy_puts_only_the_suggested_text_on_the_clipboard(browser, base_url):
+    page, _ = open_page(browser, base_url)
+    page.locator(".card").nth(1).get_by_role("button", name="Copy suggested text").click()
+    page.wait_for_function("document.querySelector('.card.selected, .card [role=status]') !== null")
+    assert page.evaluate("navigator.clipboard.readText()") == "Tap the one you like best."
+    assert "does not change your survey" in page.locator(".card").nth(1).inner_text()
+
+
+def test_findings_without_a_real_fix_have_no_copy_button(browser, base_url):
+    page, _ = open_page(browser, base_url)
+    assert page.locator(".card").first.get_by_role("button", name="Copy suggested text").count() == 0
+
+
+def test_unchecked_areas_are_not_drawn_as_earned(browser, base_url):
+    page, _ = open_page(browser, base_url)
+    page.get_by_text("Score by area").click()
+    assert page.locator(".areas i.wait").count() > 0
+    assert "waiting" in page.locator(".areas").inner_text() or "Not checked yet" in page.locator(".areas").inner_text()
+
+
+def test_clean_sample_has_no_cards_and_is_not_called_ready(browser, base_url):
+    page, _ = open_page(browser, base_url)
+    page.locator("select").select_option(index=1)
+    assert page.locator(".card").count() == 0
+    assert "Nothing to fix yet" in page.locator("#topbar").inner_text() and "Ready to launch" not in page.locator("body").inner_text()
+    assert "of 46 checked" in page.locator("#topbar").inner_text()                  # never an unqualified full ring
+    assert "Nothing flagged yet" in page.locator(".rail").inner_text() and "No issues found" not in page.locator(".rail").inner_text()
     assert not stray_text(page)
+
+
+def test_on_a_phone_the_phone_is_the_hero_and_opens_on_the_problem(browser, base_url):
+    page, _ = open_page(browser, base_url, 390)
+    phone = page.locator(".phone").bounding_box()
+    assert phone["y"] < 380 and phone["y"] < page.locator(".coach").bounding_box()["y"]
+    assert page.get_by_role("group", name="Device").is_hidden()
+    assert "Image didn't load: Relaxed fit" in page.locator(".lead").inner_text()   # the top issue, above the phone
+    pin, screen = page.locator('.pin[aria-label^="Issue 1"]').bounding_box(), page.locator(".phone-screen").bounding_box()
+    assert screen["y"] <= pin["y"] and pin["y"] + pin["height"] <= screen["y"] + screen["height"]   # pin 1 is in view
+
+
+def test_suggestions_mark_only_the_words_that_change(browser, base_url):
+    page, _ = open_page(browser, base_url)
+    card = page.locator(".card").nth(1)
+    assert card.locator("del").inner_text() == "Click" and card.locator("ins").inner_text() == "Tap"
+
+
+def test_the_ring_never_draws_unchecked_points_as_earned(browser, base_url):
+    page, _ = open_page(browser, base_url)
+    ring = page.locator(".ring")
+    earned, checked = (float(ring.evaluate(f"el => getComputedStyle(el).getPropertyValue('--{v}')").strip().replace("deg", "")) for v in "ek")
+    assert earned < checked < 360                       # earned < checked < everything: a grey 'waiting' arc always remains

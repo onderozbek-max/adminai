@@ -3,40 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SurveyCoach: sample review demo</title>
+  <title>SurveyCoach: sample review</title>
   <meta name="description" content="Sample-data demo of SurveyCoach, a mobile-first survey quality reviewer.">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <a class="skip" href="#main">Skip to the review</a>
+  <a class="skip" href="#stage">Skip to the phone preview</a>
+  <header id="topbar" class="topbar"></header>
 
-  <header class="top">
-    <h1>SurveyCoach</h1>
-    <p class="tagline">Review a survey the way a member sees it: on a phone.</p>
-  </header>
-
-  <main id="main">
-    <p id="disclaimer" class="notice"></p>
-    <fieldset class="picker">
-      <legend>Choose a sample survey</legend>
-      <div id="picker"></div>
-    </fieldset>
-    <p id="blurb" class="blurb"></p>
-
-    <div class="layout">
-      <section id="summary" aria-labelledby="summary-h"></section>
-      <section id="phone-panel" class="phone-panel" aria-labelledby="phone-h"></section>
-      <section id="findings" aria-labelledby="findings-h"></section>
-    </div>
+  <main class="studio">
+    <p id="strip" class="strip"></p>
+    <nav id="rail" class="rail" aria-label="Survey screens"></nav>
+    <section id="stage" class="stage" aria-labelledby="stage-h" tabindex="-1"></section>
+    <aside id="coach" class="coach" aria-labelledby="coach-h"></aside>
   </main>
-
-  <footer class="foot">
-    <p>Scores here are provisional: the AI step (which judges tone, leading wording, and image fit) has not run
-       on these samples. Reviews were computed by the SurveyCoach Python engine and saved with this page.</p>
-  </footer>
 
   <p id="status" class="sr-only" role="status" aria-live="polite"></p>
   <script src="data.js"></script>
+  <script src="dom.js"></script>
+  <script src="model.js"></script>
+  <script src="phone.js"></script>
+  <script src="coach.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -13,8 +13,9 @@ from surveycoach.snapshot import SurveySnapshot
 
 ROOT = Path(__file__).parent.parent
 SITE_DATA = ROOT / "site" / "data.js"
-DISCLAIMER = ("This page shows saved reviews of two made-up sample surveys. It does not read real surveys, "
-              "and SurveyCoach never changes anything in RedJade: you copy the suggestions and apply them yourself.")
+DISCLAIMER = ("Sample data: two made-up surveys. SurveyCoach never reads or changes anything in RedJade; "
+              "you copy the fixes and apply them yourself.")
+DISCLAIMER_SHORT = "Sample data. SurveyCoach never reads or edits RedJade; you copy fixes yourself."
 SAMPLES = [
     ("boxer-briefs", "A deliberately flawed sample. Shows what a review catches and how it explains each fix."),
     ("coffee-pods", "A clean sample. It still cannot be called Ready to launch, because the AI step has not run."),
@@ -27,6 +28,8 @@ def _survey(sample_id: str, blurb: str) -> dict:
     return {
         "id": sample_id, "title": snapshot.title, "blurb": blurb,
         "review": review.model_dump(mode="json", exclude={"results", "timing"}),
+        "timeline": [{"page_id": p.page_id, "seconds": round(p.cumulative_seconds)} for p in review.timing.pages],
+        "total_seconds": round(review.timing.total_seconds),
         "snapshot": snapshot.model_dump(mode="json", exclude_defaults=True),
     }
 
@@ -34,7 +37,7 @@ def _survey(sample_id: str, blurb: str) -> dict:
 def build_demo_data() -> dict:
     rubric = load_rubric()
     return {
-        "disclaimer": DISCLAIMER,
+        "disclaimer": DISCLAIMER, "disclaimer_short": DISCLAIMER_SHORT,
         "surveys": [_survey(sample_id, blurb) for sample_id, blurb in SAMPLES],
         "dimensions": {d.id: d.name for d in rubric.dimensions},
         "criteria": {**{c.id: {"title": c.title, "dimension": c.dimension, "points": c.points} for c in rubric.criteria},

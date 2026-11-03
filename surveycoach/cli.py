@@ -13,23 +13,27 @@ READINESS_LABEL = {"ready": "Ready to launch", "almost_ready": "Almost ready", "
 
 def render(review: Review) -> str:
     card = review.scorecard
-    lines = [f"SurveyCoach review: {review.survey_title}", ""]
-    lines.append(f"Readiness: {READINESS_LABEL[card.readiness]}    Score: {card.score:.1f} / 100")
+    checked = 100 - card.unchecked_points
+    earned = card.score - card.unchecked_points
+    lines = [f"SurveyCoach review: {review.survey_title}", "", f"Readiness: {READINESS_LABEL[card.readiness]}"]
+    lines.append(f"  Score on the {checked} points checked so far: {earned:.1f} of {checked} ({earned / checked:.0%})."
+                 if checked else "  Nothing has been checked yet.")
     if card.provisional:
-        lines.append(f"  Provisional: {card.unchecked_points} points are judged by the AI step, which has not run yet,"
-                     " so they count as full credit for now.")
+        lines.append(f"  {card.unchecked_points} more points wait on the AI step, which has not run yet.")
     if card.pending_blockers:
-        lines.append(f"  Pending: blockers {', '.join(card.pending_blockers)} need the AI step, so this cannot be called"
-                     " Ready to launch yet.")
+        lines.append(f"  {len(card.pending_blockers)} launch checks ({', '.join(card.pending_blockers)}) also wait on the AI step,"
+                     " so this cannot be called Ready to launch yet.")
     promise = f" (the intro promises {review.promised_minutes:g})" if review.promised_minutes else ""
     lines.append(f"Members will need about {review.est_minutes:g} minutes{promise}. This is an estimate.")
     for title, severity in (("MUST FIX", "must_fix"), ("WORTH IMPROVING", "worth_improving")):
         items = [f for f in review.findings if f.severity == severity]
         lines += ["", f"{title} ({len(items)})"]
         for f in items:
-            where = f" [{f.question_id}]" if f.question_id else ""
-            lines += [f"  {f.criterion_id}{where}  {f.evidence}", f"      Fix: {f.explanation}"]
-    lines += ["", "WHAT'S WORKING"] + [f"  {s}" for s in card.strengths or ["Nothing stands out yet."]]
+            where = f" [{f.question_id or f.page_id}]" if f.question_id or f.page_id else ""
+            lines += [f"  {f.criterion_id}{where}  {f.headline}", f"      Why: {f.explanation}"]
+            if f.suggested_text:
+                lines += [f"      Now:  {f.current_text or '(nothing)'}", f"      Fix:  {f.suggested_text}"]
+    lines += ["", "WHAT'S WORKING"] + [f"  {s}" for s in card.strengths or ["Nothing confirmed yet."]]
     return "\n".join(lines)
 
 

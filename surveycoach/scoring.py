@@ -88,7 +88,7 @@ def _strengths(rubric: Rubric, results: dict[str, CheckResult]) -> list[str]:
     """Top 3 criteria that were actually checked and earned full credit, heaviest first."""
     full = [
         c for c in rubric.criteria
-        if c.active and (r := results.get(c.id)) is not None and r.applies and r.fraction == 1.0
+        if c.active and (r := results.get(c.id)) is not None and r.applies and r.fraction == 1.0 and not r.findings
     ]
     full.sort(key=lambda c: (-c.points, c.id))
     return [c.title for c in full[:3]]

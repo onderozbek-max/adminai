@@ -15,7 +15,7 @@ REWARD_WORDS = re.compile(r"\b(points?|rewards?|earn(?:ed|ing)?|gift ?cards?|\$\
 THANKS = re.compile(r"\bthank", re.I)
 MINUTES_PHRASE = re.compile(
     r"(?:about\s+)?\d+(?:\.\d+)?\s*(?:(?:-|\u2013|to)\s*\d+(?:\.\d+)?\s*)?(?:minutes?|mins?)\b", re.I)
-REWARD_SENTENCE = "You'll earn points for finishing."
+REWARD_SENTENCE = "[Say what members get for finishing.]"   # a placeholder: only the researcher knows the reward
 FORMAT_FAMILY = {
     "single_choice": "single choice", "dropdown": "single choice", "multi_choice": "multiple choice",
     "rating": "rating", "text_short": "open text", "text_long": "open text", "image_choice": "image choice",
@@ -42,6 +42,11 @@ def _promise_broken(promised: float, estimated: float) -> bool:
 
 def _promise_overrun(promised: float, estimated: float) -> bool:
     return estimated > promised * 1.25 and estimated - promised >= 1
+
+
+def _intro_page_id(ctx: ReviewContext) -> str | None:
+    pages = ctx.snapshot.pages
+    return pages[0].id if pages and pages[0].kind == "intro" else None
 
 
 def _question_pages(ctx: ReviewContext) -> list[Page]:
@@ -75,7 +80,8 @@ def broken_time_promise(ctx: ReviewContext) -> CheckResult:
         f"The intro promises {promised:g} minutes; we estimate about {estimated:g}.",
         f"Either shorten the survey to about {promised:g} minutes or update the intro to say about {estimated:.0f} minutes.",
         "Members promised a short survey who get a long one stop trusting every future promise.",
-        current_text=intro, suggested_text=fixed_intro(intro, estimated, fix_time=True, add_reward=False),
+        page_id=_intro_page_id(ctx), current_text=intro,
+        suggested_text=fixed_intro(intro, estimated, fix_time=True, add_reward=False),
         highlight=(MINUTES_PHRASE.search(intro) or [None])[0]))
 
 
@@ -132,7 +138,7 @@ def time_and_reward(ctx: ReviewContext) -> CheckResult:
         "1.4", "worth_improving", "Intro " + " and ".join(parts), " ".join(details),
         "Say the true time and what members get, so they can decide to start. The suggested intro does both.",
         "Members decide whether to start from the time and reward; a wrong time breaks trust.",
-        current_text=intro or None,
+        page_id=_intro_page_id(ctx), current_text=intro or None,
         suggested_text=fixed_intro(intro, estimated, fix_time=no_time or wrong_time, add_reward=no_reward),
         highlight=(MINUTES_PHRASE.search(intro) or [None])[0] if wrong_time else None))
 
@@ -206,4 +212,5 @@ def room_to_speak(ctx: ReviewContext) -> CheckResult:
         "8.6", "worth_improving", "No optional comment box near the end", "No optional comment box near the end.",
         "Add one optional question: Anything else you'd like the product team to know?",
         "Members who have something to say feel heard when they get the chance.",
+        page_id=_question_pages(ctx)[-1].id if _question_pages(ctx) else None,
         suggested_text="Anything else you'd like the product team to know? (optional)"))

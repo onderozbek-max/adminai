@@ -1,5 +1,6 @@
 window.SURVEYCOACH_DEMO = {
- "disclaimer": "This page shows saved reviews of two made-up sample surveys. It does not read real surveys, and SurveyCoach never changes anything in RedJade: you copy the suggestions and apply them yourself.",
+ "disclaimer": "Sample data: two made-up surveys. SurveyCoach never reads or changes anything in RedJade; you copy the fixes and apply them yourself.",
+ "disclaimer_short": "Sample data. SurveyCoach never reads or edits RedJade; you copy fixes yourself.",
  "surveys": [
   {
    "id": "boxer-briefs",
@@ -78,7 +79,7 @@ window.SURVEYCOACH_DEMO = {
      "strengths": [
       "Length fits the survey type",
       "Format variety that fits the content",
-      "Follows the content standards"
+      "Not a wall of agree/disagree"
      ]
     },
     "findings": [
@@ -104,11 +105,11 @@ window.SURVEYCOACH_DEMO = {
       "evidence": "The intro promises 3 minutes; we estimate about 4.3. The intro doesn't mention the reward.",
       "explanation": "Say the true time and what members get, so they can decide to start. The suggested intro does both.",
       "member_impact": "Members decide whether to start from the time and reward; a wrong time breaks trust.",
-      "page_id": null,
+      "page_id": "p0",
       "question_id": null,
       "element_id": null,
       "current_text": "Welcome to the Boxer Briefs Survey! This takes about 3 minutes.",
-      "suggested_text": "Welcome to the Boxer Briefs Survey! This takes about 4 minutes. You'll earn points for finishing.",
+      "suggested_text": "Welcome to the Boxer Briefs Survey! This takes about 4 minutes. [Say what members get for finishing.]",
       "highlight": "about 3 minutes",
       "source": "auto"
      },
@@ -344,7 +345,7 @@ window.SURVEYCOACH_DEMO = {
       "evidence": "No optional comment box near the end.",
       "explanation": "Add one optional question: Anything else you'd like the product team to know?",
       "member_impact": "Members who have something to say feel heard when they get the chance.",
-      "page_id": null,
+      "page_id": "p11",
       "question_id": null,
       "element_id": null,
       "current_text": null,
@@ -410,6 +411,61 @@ window.SURVEYCOACH_DEMO = {
     "est_minutes": 4.3,
     "promised_minutes": 3.0
    },
+   "timeline": [
+    {
+     "page_id": "p0",
+     "seconds": 5
+    },
+    {
+     "page_id": "p1",
+     "seconds": 18
+    },
+    {
+     "page_id": "p2",
+     "seconds": 30
+    },
+    {
+     "page_id": "p3",
+     "seconds": 67
+    },
+    {
+     "page_id": "p4",
+     "seconds": 78
+    },
+    {
+     "page_id": "p5",
+     "seconds": 88
+    },
+    {
+     "page_id": "p6",
+     "seconds": 105
+    },
+    {
+     "page_id": "p7",
+     "seconds": 120
+    },
+    {
+     "page_id": "p8",
+     "seconds": 162
+    },
+    {
+     "page_id": "p9",
+     "seconds": 205
+    },
+    {
+     "page_id": "p10",
+     "seconds": 249
+    },
+    {
+     "page_id": "p11",
+     "seconds": 257
+    },
+    {
+     "page_id": "p12",
+     "seconds": 259
+    }
+   ],
+   "total_seconds": 259,
    "snapshot": {
     "title": "Member's Mark Boxer Briefs Feedback Survey",
     "source_url": "fixture://boxer-briefs",
@@ -833,6 +889,33 @@ window.SURVEYCOACH_DEMO = {
     "est_minutes": 1.6,
     "promised_minutes": 2.0
    },
+   "timeline": [
+    {
+     "page_id": "p0",
+     "seconds": 6
+    },
+    {
+     "page_id": "p1",
+     "seconds": 24
+    },
+    {
+     "page_id": "p2",
+     "seconds": 35
+    },
+    {
+     "page_id": "p3",
+     "seconds": 47
+    },
+    {
+     "page_id": "p4",
+     "seconds": 91
+    },
+    {
+     "page_id": "p5",
+     "seconds": 96
+    }
+   ],
+   "total_seconds": 96,
    "snapshot": {
     "title": "Help pick our next coffee pod flavor",
     "source_url": "fixture://coffee",

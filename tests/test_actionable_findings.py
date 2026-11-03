@@ -49,7 +49,7 @@ def test_click_becomes_tap_and_the_word_is_highlighted(flawed):
 def test_one_intro_finding_fixes_the_time_and_adds_the_reward_together(flawed):
     (f,) = by_criterion(flawed, "1.4")
     assert "3 min" in f.headline and "reward" in f.headline
-    assert f.suggested_text == "Welcome to the Boxer Briefs Survey! This takes about 4 minutes. You'll earn points for finishing."
+    assert f.suggested_text == "Welcome to the Boxer Briefs Survey! This takes about 4 minutes. [Say what members get for finishing.]"
 
 
 def test_jargon_is_highlighted_and_removed_from_the_suggestion(flawed):
@@ -77,7 +77,7 @@ def test_the_time_overrun_is_reported_even_though_it_is_below_the_blocker_thresh
 
 
 def test_intro_fixer_keeps_what_is_right():
-    assert fixed_intro("Hi! This takes 5 minutes.", 5.2, fix_time=False, add_reward=True) == "Hi! This takes 5 minutes. You'll earn points for finishing."
+    assert fixed_intro("Hi! This takes 5 minutes.", 5.2, fix_time=False, add_reward=True) == "Hi! This takes 5 minutes. [Say what members get for finishing.]"
     assert fixed_intro("Hi!", 2.2, fix_time=True, add_reward=False) == "Hi! This takes about 2 minutes."
 
 
@@ -86,3 +86,8 @@ def test_text_helpers():
     assert sentence_case("How Do You Like Member's Mark Boxer Briefs?") == "How do you like Member's Mark boxer briefs?"
     assert swap_word("Click here, then click Next.", "click", "tap") == "Tap here, then tap Next."
     assert limit_emoji("Hi \U0001F600 there \U0001F389", keep=1) == "Hi \U0001F600 there"
+
+
+def test_a_strength_never_sits_next_to_a_finding_in_the_same_area(flawed):
+    flagged = {c.title for c in load_rubric().criteria if c.id in {f.criterion_id for f in flawed.findings}}
+    assert not flagged & set(flawed.scorecard.strengths)
