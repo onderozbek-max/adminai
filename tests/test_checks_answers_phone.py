@@ -128,7 +128,7 @@ def test_6_3_flags_big_grids_and_long_scales():
     grid = question("g", "Rate each", "grid_single", options=(), rows=[f"row {i}" for i in range(6)], scale=scale(5))
     assert run(phone.small_grids, single(grid)).fraction == 0.0
     wide = question("g", "Rate each", "grid_single", options=(), rows=["a", "b"], scale=scale(7))
-    assert run(phone.small_grids, single(wide)).fraction == 0.0 or True   # 7 columns exceeds 5
+    assert run(phone.small_grids, single(wide)).fraction == 0.0   # 7 columns exceeds 5
     eleven = question("s", "How likely?", "rating", options=(), scale=scale(11))
     assert run(phone.small_grids, single(eleven)).fraction == 0.0
 
